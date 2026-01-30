@@ -53,6 +53,7 @@ model QandaChoice {
 
   question   QandaQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
+  @@unique([questionId, value])
   @@index([questionId, order])
 }
 

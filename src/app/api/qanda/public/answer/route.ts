@@ -34,6 +34,9 @@ function validateAnswer(value: any, question: any): { valid: boolean; error?: st
     case "multi":
     case "dropdown":
       const choices = question.choices || [];
+      if (choices.length === 0) {
+        return { valid: false, error: "No choices configured for this question." };
+      }
       const validValues = choices.map((c: any) => c.value);
       if (!validValues.includes(value)) {
         return { valid: false, error: "Please select a valid option" };

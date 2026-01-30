@@ -12,8 +12,15 @@ export default async function NewQuestionPage({
   async function handleCreate(formData: FormData) {
     "use server";
     try {
-      await createQuestion(id, formData);
-      redirect(`/admin/qanda/forms/${id}`);
+      const questionId = await createQuestion(id, formData);
+      const type = formData.get("type") as string;
+      
+      // For multi/dropdown, redirect to edit page to add choices
+      if (type === "multi" || type === "dropdown") {
+        redirect(`/admin/qanda/forms/${id}/questions/${questionId}`);
+      } else {
+        redirect(`/admin/qanda/forms/${id}`);
+      }
     } catch (error: any) {
       throw error;
     }
@@ -98,6 +105,15 @@ export default async function NewQuestionPage({
             <option value="multi">Multiple Choice</option>
             <option value="dropdown">Dropdown</option>
           </select>
+          <small
+            style={{
+              fontSize: "0.8rem",
+              color: "#666",
+              fontStyle: "italic",
+            }}
+          >
+            Note: For Multiple Choice and Dropdown questions, you'll be able to add choices after creating the question.
+          </small>
         </div>
 
         <div
