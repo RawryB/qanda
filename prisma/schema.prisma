@@ -12,12 +12,44 @@ datasource db {
 }
 
 model QandaForm {
-  id            String   @id @default(cuid())
+  id            String          @id @default(cuid())
   name          String
-  slug          String   @unique
-  status        String   @default("draft") // draft|published|archived
+  slug          String          @unique
+  status        String          @default("draft") // draft|published|archived
   redirectUrl   String?
   zapierHookUrl String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  questions     QandaQuestion[]
+}
+
+model QandaQuestion {
+  id        String        @id @default(cuid())
+  formId    String
+  order     Int
+  type      String        // text|email|phone|yesno|multi|dropdown
+  key       String        // stable identifier for piping later (e.g. first_name)
+  title     String
+  helpText  String?
+  required  Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  form      QandaForm     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  choices   QandaChoice[]
+
+  @@unique([formId, key]) // key unique within a form
+  @@index([formId, order])
+}
+
+model QandaChoice {
+  id         String        @id @default(cuid())
+  questionId String
+  order      Int
+  value      String
+  label      String
+
+  question   QandaQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId, order])
 }
