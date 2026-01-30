@@ -22,6 +22,7 @@ model QandaForm {
   updatedAt     DateTime          @updatedAt
   questions     QandaQuestion[]
   submissions   QandaSubmission[]
+  logicRules    QandaLogicRule[]
 }
 
 model QandaQuestion {
@@ -39,6 +40,7 @@ model QandaQuestion {
   form      QandaForm     @relation(fields: [formId], references: [id], onDelete: Cascade)
   choices   QandaChoice[]
   answers   QandaAnswer[]
+  sourceRules QandaLogicRule[] @relation("SourceQuestion")
 
   @@unique([formId, key]) // key unique within a form
   @@index([formId, order])
@@ -77,4 +79,22 @@ model QandaAnswer {
   submission   QandaSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   question     QandaQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
   @@unique([submissionId, questionId])
+}
+
+model QandaLogicRule {
+  id                  String        @id @default(cuid())
+  formId              String
+  sourceQuestionId    String
+  operator            String        // equals | not_equals | contains | is_true | is_false
+  compareValue        String?
+  destinationQuestionId String?
+  isEnd               Boolean       @default(false)
+  priority            Int           @default(0) // lower number = evaluated first
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  form                QandaForm     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  sourceQuestion      QandaQuestion @relation("SourceQuestion", fields: [sourceQuestionId], references: [id], onDelete: Cascade)
+
+  @@index([formId, sourceQuestionId, priority])
 }

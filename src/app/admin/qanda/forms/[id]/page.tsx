@@ -60,6 +60,19 @@ export default async function EditFormPage({
           }}
         >
           <Link
+            href={`/admin/qanda/forms/${id}/rules`}
+            style={{
+              padding: "0.5rem 1rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              textDecoration: "none",
+              color: "#000",
+              fontSize: "0.9rem",
+            }}
+          >
+            Branching Rules
+          </Link>
+          <Link
             href={`/admin/qanda/submissions?formId=${id}`}
             style={{
               padding: "0.5rem 1rem",

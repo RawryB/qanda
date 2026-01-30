@@ -99,14 +99,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Store answer
+    // Store answer (normalize for yesno: store both valueJson and valueText)
     const answerData: any = {
       submissionId,
       questionId,
     };
 
     if (question.type === "yesno") {
-      answerData.valueJson = value === "yes" || value === true;
+      const boolValue = value === "yes" || value === true;
+      answerData.valueJson = boolValue;
+      answerData.valueText = boolValue ? "true" : "false"; // Store as string for consistent evaluation
     } else if (question.type === "multi" || question.type === "dropdown") {
       answerData.valueText = value;
     } else {
@@ -124,7 +126,138 @@ export async function POST(request: Request) {
       update: answerData,
     });
 
-    // Find next question
+    // Evaluate branching rules
+    // 
+    // Example scenario:
+    // - Form has questions: Q1 (yesno: "Are you a member?"), Q2 (text: "Name"), Q3 (text: "Email")
+    // - Rule 1 (priority 0): When Q1 = "yes" → Go to Q3 (skip Q2)
+    // - Rule 2 (priority 1): When Q1 = "no" → Go to Q2 (default flow)
+    // 
+    // Flow:
+    // 1. User answers Q1 with "yes"
+    // 2. Rules are evaluated in priority order (0, then 1)
+    // 3. Rule 1 matches → User goes directly to Q3, skipping Q2
+    // 4. If user answers "no", Rule 1 doesn't match, Rule 2 matches → User goes to Q2
+    // 5. If no rules match, default to next question in order
+    //
+    // Load all rules for this question, ordered by priority (lower = first)
+    const rules = await prisma.qandaLogicRule.findMany({
+      where: {
+        formId: submission.formId,
+        sourceQuestionId: questionId,
+      },
+      orderBy: {
+        priority: "asc",
+      },
+    });
+
+    // Normalize answer value for rule evaluation
+    let answerValue: string;
+    if (question.type === "yesno") {
+      // For yesno, use valueText ("true"/"false") or convert boolean
+      answerValue = answerData.valueText || (answerData.valueJson ? "true" : "false");
+    } else {
+      // For other types, use valueText (string)
+      answerValue = answerData.valueText || "";
+    }
+
+    // Evaluate rules in priority order (first match wins)
+    let matchedRule = null;
+    for (const rule of rules) {
+      let matches = false;
+
+      switch (rule.operator) {
+        case "equals":
+          matches = answerValue === rule.compareValue;
+          break;
+        case "not_equals":
+          matches = answerValue !== rule.compareValue;
+          break;
+        case "contains":
+          matches = answerValue.includes(rule.compareValue || "");
+          break;
+        case "is_true":
+          // For yesno questions, check if value is true
+          matches = answerValue === "true" || answerData.valueJson === true;
+          break;
+        case "is_false":
+          // For yesno questions, check if value is false
+          matches = answerValue === "false" || answerData.valueJson === false;
+          break;
+      }
+
+      if (matches) {
+        matchedRule = rule;
+        break; // First match wins
+      }
+    }
+
+    // If a rule matched, follow its destination
+    if (matchedRule) {
+      // Guardrail: Prevent infinite loops (destination equals current question)
+      if (matchedRule.destinationQuestionId === questionId) {
+        // Ignore rule, fall through to default behavior
+        matchedRule = null;
+      } else if (matchedRule.isEnd) {
+        // End the form
+        await prisma.qandaSubmission.update({
+          where: { id: submissionId },
+          data: {
+            status: "completed",
+            completedAt: new Date(),
+          },
+        });
+        // Reload submission to get form with redirectUrl
+        const completedSubmission = await prisma.qandaSubmission.findUnique({
+          where: { id: submissionId },
+          include: { form: true },
+        });
+        return NextResponse.json({
+          completed: true,
+          redirectUrl: completedSubmission?.form.redirectUrl || null,
+        });
+      } else if (matchedRule.destinationQuestionId) {
+        // Go to destination question
+        const destinationQuestion = await prisma.qandaQuestion.findUnique({
+          where: { id: matchedRule.destinationQuestionId },
+          include: {
+            choices: {
+              orderBy: { order: "asc" },
+            },
+          },
+        });
+
+        // Guardrail: If destination question is missing (deleted), ignore rule
+        if (!destinationQuestion) {
+          // Fall through to default behavior
+          matchedRule = null;
+        } else {
+          // Verify destination question belongs to the form
+          if (destinationQuestion.formId !== submission.formId) {
+            // Fall through to default behavior
+            matchedRule = null;
+          } else {
+            return NextResponse.json({
+              nextQuestion: {
+                id: destinationQuestion.id,
+                type: destinationQuestion.type,
+                title: destinationQuestion.title,
+                helpText: destinationQuestion.helpText,
+                required: destinationQuestion.required,
+                key: destinationQuestion.key,
+                choices: destinationQuestion.choices.map((c) => ({
+                  value: c.value,
+                  label: c.label,
+                })),
+              },
+            });
+          }
+        }
+      }
+    }
+
+    // Default behavior: Find next question in order (linear flow)
+    // This happens if no rule matched, or if matched rule was invalid
     const nextQuestion = await prisma.qandaQuestion.findFirst({
       where: {
         formId: submission.formId,
@@ -158,7 +291,23 @@ export async function POST(request: Request) {
         },
       });
     } else {
-      return NextResponse.json({ completed: true });
+      // No more questions, complete the submission
+      await prisma.qandaSubmission.update({
+        where: { id: submissionId },
+        data: {
+          status: "completed",
+          completedAt: new Date(),
+        },
+      });
+      // Reload submission to get form with redirectUrl
+      const completedSubmission = await prisma.qandaSubmission.findUnique({
+        where: { id: submissionId },
+        include: { form: true },
+      });
+      return NextResponse.json({
+        completed: true,
+        redirectUrl: completedSubmission?.form.redirectUrl || null,
+      });
     }
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Failed to save answer" }, { status: 500 });

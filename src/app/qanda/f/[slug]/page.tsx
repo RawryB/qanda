@@ -102,24 +102,12 @@ export default function QandaRunnerPage() {
       }
 
       if (data.completed) {
-        // Complete the submission
-        const completeResponse = await fetch("/api/qanda/public/complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ submissionId }),
-        });
-
-        const completeData = await completeResponse.json();
-
-        if (!completeResponse.ok) {
-          throw new Error(completeData.error || "Failed to complete submission");
-        }
-
+        // Submission is already completed by the answer endpoint
         setState("completed");
 
         // Redirect if redirectUrl exists
-        if (completeData.redirectUrl) {
-          window.location.href = completeData.redirectUrl;
+        if (data.redirectUrl) {
+          window.location.href = data.redirectUrl;
         }
       } else {
         // Move to next question
