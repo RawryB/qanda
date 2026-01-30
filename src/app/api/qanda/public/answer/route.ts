@@ -102,6 +102,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
+    // Fetch existing answer to check if it changed
+    const existingAnswer = await prisma.qandaAnswer.findUnique({
+      where: {
+        submissionId_questionId: {
+          submissionId,
+          questionId,
+        },
+      },
+    });
+
     // Store answer (normalize for yesno: store both valueJson and valueText)
     const answerData: any = {
       submissionId,
@@ -116,6 +126,77 @@ export async function POST(request: Request) {
       answerData.valueText = value;
     } else {
       answerData.valueText = value;
+    }
+
+    // Determine if answer changed
+    let answerChanged = false;
+    if (!existingAnswer) {
+      // No previous answer, but new answer is non-null
+      answerChanged = answerData.valueText !== null && answerData.valueText !== undefined;
+    } else {
+      // Compare values
+      const oldValueText = existingAnswer.valueText;
+      const oldValueJson = existingAnswer.valueJson;
+      const newValueText = answerData.valueText;
+      const newValueJson = answerData.valueJson;
+
+      if (oldValueText !== newValueText) {
+        answerChanged = true;
+      } else if (oldValueJson !== newValueJson) {
+        // Compare JSON values (for yesno)
+        answerChanged = JSON.stringify(oldValueJson) !== JSON.stringify(newValueJson);
+      }
+    }
+
+    // If answer changed, truncate nav history and downstream answers
+    if (answerChanged) {
+      // Find the stepIndex for this questionId
+      const currentStep = await prisma.qandaNavStep.findFirst({
+        where: {
+          submissionId,
+          questionId,
+        },
+        orderBy: {
+          stepIndex: "desc",
+        },
+      });
+
+      if (currentStep) {
+        // Delete all nav steps with stepIndex > current stepIndex
+        const deletedSteps = await prisma.qandaNavStep.findMany({
+          where: {
+            submissionId,
+            stepIndex: {
+              gt: currentStep.stepIndex,
+            },
+          },
+        });
+
+        // Collect questionIds from deleted steps
+        const downstreamQuestionIds = deletedSteps.map((step) => step.questionId);
+
+        // Delete downstream answers
+        if (downstreamQuestionIds.length > 0) {
+          await prisma.qandaAnswer.deleteMany({
+            where: {
+              submissionId,
+              questionId: {
+                in: downstreamQuestionIds,
+              },
+            },
+          });
+        }
+
+        // Delete the nav steps
+        await prisma.qandaNavStep.deleteMany({
+          where: {
+            submissionId,
+            stepIndex: {
+              gt: currentStep.stepIndex,
+            },
+          },
+        });
+      }
     }
 
     await prisma.qandaAnswer.upsert({
@@ -274,6 +355,22 @@ export async function POST(request: Request) {
             const renderedTitle = renderTemplate(destinationQuestion.title, values);
             const renderedHelpText = renderTemplate(destinationQuestion.helpText, values);
 
+            // Get max stepIndex and create new nav step
+            const maxStep = await prisma.qandaNavStep.findFirst({
+              where: { submissionId },
+              orderBy: { stepIndex: "desc" },
+              select: { stepIndex: true },
+            });
+            const newStepIndex = (maxStep?.stepIndex ?? -1) + 1;
+
+            await prisma.qandaNavStep.create({
+              data: {
+                submissionId,
+                questionId: destinationQuestion.id,
+                stepIndex: newStepIndex,
+              },
+            });
+
             return NextResponse.json({
               nextQuestion: {
                 id: destinationQuestion.id,
@@ -289,6 +386,7 @@ export async function POST(request: Request) {
                   label: c.label,
                 })),
               },
+              stepIndex: newStepIndex,
             });
           }
         }
@@ -319,6 +417,22 @@ export async function POST(request: Request) {
       const renderedTitle = renderTemplate(nextQuestion.title, values);
       const renderedHelpText = renderTemplate(nextQuestion.helpText, values);
 
+      // Get max stepIndex and create new nav step
+      const maxStep = await prisma.qandaNavStep.findFirst({
+        where: { submissionId },
+        orderBy: { stepIndex: "desc" },
+        select: { stepIndex: true },
+      });
+      const newStepIndex = (maxStep?.stepIndex ?? -1) + 1;
+
+      await prisma.qandaNavStep.create({
+        data: {
+          submissionId,
+          questionId: nextQuestion.id,
+          stepIndex: newStepIndex,
+        },
+      });
+
       return NextResponse.json({
         nextQuestion: {
           id: nextQuestion.id,
@@ -334,6 +448,7 @@ export async function POST(request: Request) {
             label: c.label,
           })),
         },
+        stepIndex: newStepIndex,
       });
     } else {
       // No more questions, complete the submission

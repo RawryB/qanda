@@ -42,6 +42,7 @@ model QandaQuestion {
   choices   QandaChoice[]
   answers   QandaAnswer[]
   sourceRules QandaLogicRule[] @relation("SourceQuestion")
+  navSteps  QandaNavStep[]
 
   @@unique([formId, key]) // key unique within a form
   @@index([formId, order])
@@ -69,6 +70,7 @@ model QandaSubmission {
   form        QandaForm     @relation(fields: [formId], references: [id], onDelete: Cascade)
   answers     QandaAnswer[]
   webhookAttempts QandaWebhookAttempt[]
+  navSteps    QandaNavStep[]
   @@index([formId, startedAt])
 }
 
@@ -117,4 +119,19 @@ model QandaWebhookAttempt {
 
   @@index([submissionId, createdAt])
   @@index([formId, createdAt])
+}
+
+model QandaNavStep {
+  id           String   @id @default(cuid())
+  submissionId String
+  questionId   String
+  stepIndex    Int      // 0-based increasing
+  createdAt    DateTime @default(now())
+
+  submission   QandaSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question     QandaQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, stepIndex])
+  @@index([submissionId, stepIndex])
+  @@index([submissionId, questionId])
 }

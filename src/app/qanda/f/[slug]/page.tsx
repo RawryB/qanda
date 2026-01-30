@@ -25,6 +25,7 @@ export default function QandaRunnerPage() {
   const [formName, setFormName] = useState("");
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [stepIndex, setStepIndex] = useState<number>(0);
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,6 +73,7 @@ export default function QandaRunnerPage() {
         setFormName(data.form.name);
       }
       setCurrentQuestion(data.question);
+      setStepIndex(data.stepIndex ?? 0);
       setState("question");
     } catch (err: any) {
       setError(err.message || "Failed to start form");
@@ -114,10 +116,64 @@ export default function QandaRunnerPage() {
       } else {
         // Move to next question
         setCurrentQuestion(data.nextQuestion);
+        setStepIndex(data.stepIndex ?? stepIndex + 1);
         setAnswer("");
       }
     } catch (err: any) {
       setError(err.message || "Failed to save answer");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBack = async () => {
+    if (!submissionId) return;
+
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/qanda/public/back", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ submissionId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to go back");
+      }
+
+      if (data.atStart) {
+        // Already at start, do nothing
+        return;
+      }
+
+      // Update question and stepIndex
+      setCurrentQuestion(data.question);
+      setStepIndex(data.stepIndex);
+
+      // Prefill answer if existingAnswer exists
+      if (data.existingAnswer) {
+        if (data.question.type === "yesno") {
+          // For yesno, existingAnswer.valueText might be "true"/"false" or valueJson might be boolean
+          const answerValue = data.existingAnswer.valueText || data.existingAnswer.valueJson;
+          if (answerValue === true || answerValue === "true") {
+            setAnswer("yes");
+          } else if (answerValue === false || answerValue === "false") {
+            setAnswer("no");
+          } else {
+            setAnswer(answerValue || "");
+          }
+        } else {
+          setAnswer(data.existingAnswer.valueText || data.existingAnswer.valueJson || "");
+        }
+      } else {
+        setAnswer("");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to go back");
     } finally {
       setIsSubmitting(false);
     }
@@ -383,24 +439,50 @@ export default function QandaRunnerPage() {
         >
           {renderInput()}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
+          <div
             style={{
-              padding: "0.75rem 1.5rem",
-              backgroundColor: "#0066cc",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "1rem",
-              fontWeight: "500",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              opacity: isSubmitting ? 0.6 : 1,
+              display: "flex",
+              gap: "1rem",
               marginTop: "1rem",
             }}
           >
-            {isSubmitting ? "Saving..." : "Next"}
-          </button>
+            <button
+              type="button"
+              onClick={handleBack}
+              disabled={isSubmitting || stepIndex === 0}
+              style={{
+                padding: "0.75rem 1.5rem",
+                backgroundColor: stepIndex === 0 ? "#e5e5e5" : "#fff",
+                color: stepIndex === 0 ? "#999" : "#000",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                fontSize: "1rem",
+                fontWeight: "500",
+                cursor: stepIndex === 0 || isSubmitting ? "not-allowed" : "pointer",
+                opacity: stepIndex === 0 || isSubmitting ? 0.6 : 1,
+              }}
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              style={{
+                padding: "0.75rem 1.5rem",
+                backgroundColor: "#0066cc",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px",
+                fontSize: "1rem",
+                fontWeight: "500",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+                opacity: isSubmitting ? 0.6 : 1,
+                flex: 1,
+              }}
+            >
+              {isSubmitting ? "Saving..." : "Next"}
+            </button>
+          </div>
         </form>
       </div>
     );

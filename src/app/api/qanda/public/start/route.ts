@@ -48,6 +48,15 @@ export async function POST(request: Request) {
 
     const firstQuestion = form.questions[0];
 
+    // Create first nav step with stepIndex=0
+    await prisma.qandaNavStep.create({
+      data: {
+        submissionId: submission.id,
+        questionId: firstQuestion.id,
+        stepIndex: 0,
+      },
+    });
+
     // For /start: there are no prior answers, so values map is empty
     const values: Record<string, string> = {};
     const renderedTitle = renderTemplate(firstQuestion.title, values);
@@ -69,6 +78,7 @@ export async function POST(request: Request) {
           label: c.label,
         })),
       },
+      stepIndex: 0,
       form: {
         name: form.name,
         slug: form.slug,
