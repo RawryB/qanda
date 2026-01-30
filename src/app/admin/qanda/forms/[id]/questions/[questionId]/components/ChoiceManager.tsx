@@ -7,7 +7,7 @@ import {
   updateChoice,
   deleteChoice,
   moveChoice,
-} from "../../../actions";
+} from "../../actions";
 
 type Choice = {
   id: string;

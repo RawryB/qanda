@@ -34,13 +34,16 @@ export function MoveQuestionButton({
       onClick={handleMove}
       disabled={disabled || isMoving}
       style={{
-        padding: "0.5rem",
+        padding: "0.5rem 0.75rem",
         border: "1px solid #ccc",
         borderRadius: "4px",
         backgroundColor: "#fff",
+        color: "#000",
         cursor: disabled || isMoving ? "not-allowed" : "pointer",
         opacity: disabled || isMoving ? 0.6 : 1,
-        fontSize: "0.9rem",
+        fontSize: "1rem",
+        fontWeight: "bold",
+        minWidth: "2rem",
       }}
       title={direction === "up" ? "Move up" : "Move down"}
     >

@@ -320,7 +320,7 @@ export default async function EditFormPage({
         {questions.length === 0 ? (
           <p
             style={{
-              color: "#666",
+              color: "#333",
               fontSize: "1rem",
             }}
           >
@@ -364,7 +364,7 @@ export default async function EditFormPage({
                     <span
                       style={{
                         fontSize: "0.9rem",
-                        color: "#666",
+                        color: "#333",
                         fontWeight: "500",
                       }}
                     >
@@ -375,7 +375,7 @@ export default async function EditFormPage({
                       style={{
                         fontSize: "1.1rem",
                         fontWeight: "500",
-                        color: "#000",
+                        color: "#0066cc",
                         textDecoration: "none",
                       }}
                     >
@@ -384,10 +384,12 @@ export default async function EditFormPage({
                     <span
                       style={{
                         padding: "0.25rem 0.5rem",
-                        backgroundColor: "#f0f0f0",
+                        backgroundColor: "#e5e5e5",
                         borderRadius: "4px",
                         fontSize: "0.75rem",
                         textTransform: "uppercase",
+                        color: "#000",
+                        fontWeight: "500",
                       }}
                     >
                       {question.type}
@@ -400,6 +402,7 @@ export default async function EditFormPage({
                           borderRadius: "4px",
                           fontSize: "0.75rem",
                           color: "#c33",
+                          fontWeight: "500",
                         }}
                       >
                         Required
@@ -411,10 +414,10 @@ export default async function EditFormPage({
                       display: "flex",
                       gap: "1rem",
                       fontSize: "0.9rem",
-                      color: "#666",
+                      color: "#333",
                     }}
                   >
-                    <span>Key: {question.key}</span>
+                    <span>Key: <strong>{question.key}</strong></span>
                   </div>
                 </div>
                 <div
@@ -443,6 +446,7 @@ export default async function EditFormPage({
                       borderRadius: "4px",
                       textDecoration: "none",
                       color: "#000",
+                      backgroundColor: "#fff",
                       fontSize: "0.9rem",
                     }}
                   >

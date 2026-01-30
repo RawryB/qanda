@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { getQuestion, updateQuestion, deleteQuestion } from "../../actions";
+import { notFound } from "next/navigation";
+import { getQuestion, updateQuestion } from "../actions";
 import { ChoiceManager } from "./components/ChoiceManager";
+import { DeleteQuestionButton } from "./components/DeleteQuestionButton";
 
 export default async function EditQuestionPage({
   params,
@@ -19,16 +20,6 @@ export default async function EditQuestionPage({
     "use server";
     try {
       await updateQuestion(questionId, formData);
-    } catch (error: any) {
-      throw error;
-    }
-  }
-
-  async function handleDelete() {
-    "use server";
-    try {
-      await deleteQuestion(questionId);
-      redirect(`/admin/qanda/forms/${id}`);
     } catch (error: any) {
       throw error;
     }
@@ -282,28 +273,7 @@ export default async function EditQuestionPage({
           >
             Cancel
           </Link>
-          <form action={handleDelete}>
-            <button
-              type="submit"
-              style={{
-                padding: "0.75rem 1.5rem",
-                backgroundColor: "#dc2626",
-                color: "#fff",
-                border: "none",
-                borderRadius: "4px",
-                fontSize: "1rem",
-                fontWeight: "500",
-                cursor: "pointer",
-              }}
-              onClick={(e) => {
-                if (!confirm("Are you sure you want to delete this question?")) {
-                  e.preventDefault();
-                }
-              }}
-            >
-              Delete
-            </button>
-          </form>
+          <DeleteQuestionButton questionId={questionId} formId={id} />
         </div>
       </form>
 
