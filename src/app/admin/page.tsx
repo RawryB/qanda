@@ -1,22 +1,21 @@
-export default function Home() {
+export default function Admin() {
   return (
     <div
       style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: "100vh",
+        minHeight: "60vh",
       }}
     >
-      <h1
+      <p
         style={{
-          fontSize: "3rem",
-          fontWeight: "bold",
+          fontSize: "1.5rem",
           margin: 0,
         }}
       >
-        SwimFast
-      </h1>
+        you are inside
+      </p>
     </div>
   );
 }
