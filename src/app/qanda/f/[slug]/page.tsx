@@ -23,6 +23,7 @@ export default function QandaRunnerPage() {
 
   const [state, setState] = useState<FormState>("loading");
   const [formName, setFormName] = useState("");
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [stepIndex, setStepIndex] = useState<number>(0);
@@ -71,6 +72,9 @@ export default function QandaRunnerPage() {
       setSubmissionId(data.submissionId);
       if (data.form?.name) {
         setFormName(data.form.name);
+      }
+      if (data.form?.backgroundImageUrl) {
+        setBackgroundImageUrl(data.form.backgroundImageUrl);
       }
       setCurrentQuestion(data.question);
       setStepIndex(data.stepIndex ?? 0);
@@ -328,19 +332,33 @@ export default function QandaRunnerPage() {
     );
   }
 
+  // Container style with background image
+  const containerStyle: React.CSSProperties = {
+    minHeight: "100vh",
+    ...(backgroundImageUrl
+      ? {
+          backgroundImage: `url(${backgroundImageUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }
+      : {}),
+  };
+
   if (state === "start") {
     return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "100vh",
-          gap: "2rem",
-          padding: "2rem",
-        }}
-      >
+      <div style={containerStyle}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
+            gap: "2rem",
+            padding: "2rem",
+          }}
+        >
         <h1
           style={{
             fontSize: "2rem",
@@ -377,22 +395,26 @@ export default function QandaRunnerPage() {
         >
           {isSubmitting ? "Starting..." : "Start"}
         </button>
+        </div>
       </div>
     );
   }
 
   if (state === "question" && currentQuestion) {
     return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          maxWidth: "600px",
-          margin: "2rem auto",
-          gap: "1.5rem",
-          padding: "2rem",
-        }}
-      >
+      <div style={containerStyle}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            maxWidth: "600px",
+            margin: "2rem auto",
+            gap: "1.5rem",
+            padding: "2rem",
+            backgroundColor: backgroundImageUrl ? "rgba(255, 255, 255, 0.85)" : "transparent",
+            borderRadius: backgroundImageUrl ? "8px" : "0",
+          }}
+        >
         <h2
           style={{
             fontSize: "1.5rem",
@@ -484,23 +506,25 @@ export default function QandaRunnerPage() {
             </button>
           </div>
         </form>
+        </div>
       </div>
     );
   }
 
   if (state === "completed") {
     return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "100vh",
-          gap: "1rem",
-          padding: "2rem",
-        }}
-      >
+      <div style={containerStyle}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
+            gap: "1rem",
+            padding: "2rem",
+          }}
+        >
         <h1
           style={{
             fontSize: "2rem",
@@ -518,6 +542,7 @@ export default function QandaRunnerPage() {
         >
           Thank you for your submission!
         </p>
+        </div>
       </div>
     );
   }

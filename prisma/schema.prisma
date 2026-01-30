@@ -12,18 +12,19 @@ datasource db {
 }
 
 model QandaForm {
-  id            String            @id @default(cuid())
-  name          String
-  slug          String            @unique
-  status        String            @default("draft") // draft|published|archived
-  redirectUrl   String?
-  zapierHookUrl String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  questions     QandaQuestion[]
-  submissions   QandaSubmission[]
-  logicRules    QandaLogicRule[]
-  webhookAttempts QandaWebhookAttempt[]
+  id                String            @id @default(cuid())
+  name              String
+  slug              String            @unique
+  status            String            @default("draft") // draft|published|archived
+  redirectUrl       String?
+  zapierHookUrl     String?
+  backgroundImageUrl String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  questions         QandaQuestion[]
+  submissions       QandaSubmission[]
+  logicRules        QandaLogicRule[]
+  webhookAttempts   QandaWebhookAttempt[]
 }
 
 model QandaQuestion {

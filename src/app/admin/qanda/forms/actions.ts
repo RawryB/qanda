@@ -10,6 +10,7 @@ export async function createForm(formData: FormData) {
   const status = formData.get("status") as string;
   const redirectUrl = formData.get("redirectUrl") as string | null;
   const zapierHookUrl = formData.get("zapierHookUrl") as string | null;
+  const backgroundImageUrl = formData.get("backgroundImageUrl") as string | null;
 
   // Validate slug format
   if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -33,6 +34,14 @@ export async function createForm(formData: FormData) {
     }
   }
 
+  if (backgroundImageUrl && backgroundImageUrl.trim() !== "") {
+    try {
+      new URL(backgroundImageUrl);
+    } catch {
+      throw new Error("Invalid background image URL format");
+    }
+  }
+
   try {
     const form = await prisma.qandaForm.create({
       data: {
@@ -41,6 +50,7 @@ export async function createForm(formData: FormData) {
         status: status || "draft",
         redirectUrl: redirectUrl?.trim() || null,
         zapierHookUrl: zapierHookUrl?.trim() || null,
+        backgroundImageUrl: backgroundImageUrl?.trim() || null,
       },
     });
 
@@ -60,6 +70,7 @@ export async function updateForm(id: string, formData: FormData) {
   const status = formData.get("status") as string;
   const redirectUrl = formData.get("redirectUrl") as string | null;
   const zapierHookUrl = formData.get("zapierHookUrl") as string | null;
+  const backgroundImageUrl = formData.get("backgroundImageUrl") as string | null;
 
   // Validate slug format
   if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -83,6 +94,14 @@ export async function updateForm(id: string, formData: FormData) {
     }
   }
 
+  if (backgroundImageUrl && backgroundImageUrl.trim() !== "") {
+    try {
+      new URL(backgroundImageUrl);
+    } catch {
+      throw new Error("Invalid background image URL format");
+    }
+  }
+
   try {
     await prisma.qandaForm.update({
       where: { id },
@@ -92,6 +111,7 @@ export async function updateForm(id: string, formData: FormData) {
         status: status || "draft",
         redirectUrl: redirectUrl?.trim() || null,
         zapierHookUrl: zapierHookUrl?.trim() || null,
+        backgroundImageUrl: backgroundImageUrl?.trim() || null,
       },
     });
 

@@ -273,6 +273,36 @@ export default async function EditFormPage({
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+          }}
+        >
+          <label
+            htmlFor="backgroundImageUrl"
+            style={{
+              fontSize: "0.9rem",
+              fontWeight: "500",
+            }}
+          >
+            Background Image URL (optional)
+          </label>
+          <input
+            type="url"
+            id="backgroundImageUrl"
+            name="backgroundImageUrl"
+            defaultValue={form.backgroundImageUrl || ""}
+            style={{
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              fontSize: "1rem",
+            }}
+          />
+        </div>
+
+        <div
+          style={{
+            display: "flex",
             gap: "1rem",
             marginTop: "1rem",
           }}

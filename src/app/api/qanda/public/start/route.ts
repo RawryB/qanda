@@ -82,6 +82,7 @@ export async function POST(request: Request) {
       form: {
         name: form.name,
         slug: form.slug,
+        backgroundImageUrl: form.backgroundImageUrl,
       },
     });
   } catch (error: any) {
