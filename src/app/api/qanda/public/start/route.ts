@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { renderTemplate } from "@/lib/qanda/template";
 
 export async function POST(request: Request) {
   try {
@@ -47,6 +48,11 @@ export async function POST(request: Request) {
 
     const firstQuestion = form.questions[0];
 
+    // For /start: there are no prior answers, so values map is empty
+    const values: Record<string, string> = {};
+    const renderedTitle = renderTemplate(firstQuestion.title, values);
+    const renderedHelpText = renderTemplate(firstQuestion.helpText, values);
+
     return NextResponse.json({
       submissionId: submission.id,
       question: {
@@ -54,6 +60,8 @@ export async function POST(request: Request) {
         type: firstQuestion.type,
         title: firstQuestion.title,
         helpText: firstQuestion.helpText,
+        renderedTitle,
+        renderedHelpText,
         required: firstQuestion.required,
         key: firstQuestion.key,
         choices: firstQuestion.choices.map((c) => ({

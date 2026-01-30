@@ -8,6 +8,8 @@ type Question = {
   type: string;
   title: string;
   helpText: string | null;
+  renderedTitle?: string;
+  renderedHelpText?: string | null;
   required: boolean;
   key: string;
   choices?: Array<{ value: string; label: string }>;
@@ -342,10 +344,10 @@ export default function QandaRunnerPage() {
             margin: 0,
           }}
         >
-          {currentQuestion.title}
+          {currentQuestion.renderedTitle ?? currentQuestion.title}
         </h2>
 
-        {currentQuestion.helpText && (
+        {(currentQuestion.renderedHelpText ?? currentQuestion.helpText) && (
           <p
             style={{
               fontSize: "1rem",
@@ -353,7 +355,7 @@ export default function QandaRunnerPage() {
               margin: 0,
             }}
           >
-            {currentQuestion.helpText}
+            {currentQuestion.renderedHelpText ?? currentQuestion.helpText}
           </p>
         )}
 

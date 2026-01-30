@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { renderTemplate } from "@/lib/qanda/template";
+import { answersToValueMap } from "@/lib/qanda/answers";
 
 function validateAnswer(value: any, question: any): { valid: boolean; error?: string } {
   if (question.required && (!value || value === "")) {
@@ -126,6 +128,22 @@ export async function POST(request: Request) {
       update: answerData,
     });
 
+    // Load all answers for this submission (including the one we just saved)
+    // This is needed for template rendering of the next question
+    const allAnswers = await prisma.qandaAnswer.findMany({
+      where: { submissionId },
+      include: {
+        question: {
+          select: {
+            key: true,
+          },
+        },
+      },
+    });
+
+    // Build value map for template rendering
+    const values = answersToValueMap(allAnswers);
+
     // Evaluate branching rules
     // 
     // Example scenario:
@@ -237,12 +255,18 @@ export async function POST(request: Request) {
             // Fall through to default behavior
             matchedRule = null;
           } else {
+            // Render template for destination question
+            const renderedTitle = renderTemplate(destinationQuestion.title, values);
+            const renderedHelpText = renderTemplate(destinationQuestion.helpText, values);
+
             return NextResponse.json({
               nextQuestion: {
                 id: destinationQuestion.id,
                 type: destinationQuestion.type,
                 title: destinationQuestion.title,
                 helpText: destinationQuestion.helpText,
+                renderedTitle,
+                renderedHelpText,
                 required: destinationQuestion.required,
                 key: destinationQuestion.key,
                 choices: destinationQuestion.choices.map((c) => ({
@@ -276,12 +300,18 @@ export async function POST(request: Request) {
     });
 
     if (nextQuestion) {
+      // Render template for next question
+      const renderedTitle = renderTemplate(nextQuestion.title, values);
+      const renderedHelpText = renderTemplate(nextQuestion.helpText, values);
+
       return NextResponse.json({
         nextQuestion: {
           id: nextQuestion.id,
           type: nextQuestion.type,
           title: nextQuestion.title,
           helpText: nextQuestion.helpText,
+          renderedTitle,
+          renderedHelpText,
           required: nextQuestion.required,
           key: nextQuestion.key,
           choices: nextQuestion.choices.map((c) => ({
