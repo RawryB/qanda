@@ -18,19 +18,13 @@ export default function NewFormPage() {
           alignItems: "center",
         }}
       >
-        <h1
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
+        <h1 className="gradient-text" style={{ fontSize: "2rem", fontWeight: "bold", margin: 0 }}>
           New Form
         </h1>
         <Link
           href="/admin/qanda/forms"
+          className="text-secondary"
           style={{
-            color: "#0066cc",
             textDecoration: "underline",
             fontSize: "0.9rem",
           }}
@@ -41,6 +35,7 @@ export default function NewFormPage() {
 
       <form
         action={createForm}
+        className="glass-card fade-in-up"
         style={{
           display: "flex",
           flexDirection: "column",
@@ -56,24 +51,20 @@ export default function NewFormPage() {
         >
           <label
             htmlFor="name"
+            className="text-primary"
             style={{
               fontSize: "0.9rem",
               fontWeight: "500",
             }}
           >
-            Name <span style={{ color: "#dc2626" }}>*</span>
+            Name <span style={{ color: "#f5576c" }}>*</span>
           </label>
           <input
             type="text"
             id="name"
             name="name"
             required
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
+            className="glass-input"
           />
         </div>
 
@@ -86,12 +77,13 @@ export default function NewFormPage() {
         >
           <label
             htmlFor="slug"
+            className="text-primary"
             style={{
               fontSize: "0.9rem",
               fontWeight: "500",
             }}
           >
-            Slug <span style={{ color: "#dc2626" }}>*</span>
+            Slug <span style={{ color: "#f5576c" }}>*</span>
           </label>
           <input
             type="text"
@@ -99,19 +91,9 @@ export default function NewFormPage() {
             name="slug"
             required
             pattern="[a-z0-9-]+"
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
+            className="glass-input"
           />
-          <small
-            style={{
-              fontSize: "0.8rem",
-              color: "#666",
-            }}
-          >
+          <small className="text-muted" style={{ fontSize: "0.8rem" }}>
             Lowercase letters, numbers, and hyphens only. No spaces.
           </small>
         </div>
@@ -125,6 +107,7 @@ export default function NewFormPage() {
         >
           <label
             htmlFor="status"
+            className="text-primary"
             style={{
               fontSize: "0.9rem",
               fontWeight: "500",
@@ -136,16 +119,11 @@ export default function NewFormPage() {
             id="status"
             name="status"
             defaultValue="draft"
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
+            className="glass-select"
           >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
+            <option value="draft" style={{ background: "#1e3a8a", color: "white" }}>Draft</option>
+            <option value="published" style={{ background: "#1e3a8a", color: "white" }}>Published</option>
+            <option value="archived" style={{ background: "#1e3a8a", color: "white" }}>Archived</option>
           </select>
         </div>
 
@@ -158,6 +136,7 @@ export default function NewFormPage() {
         >
           <label
             htmlFor="redirectUrl"
+            className="text-primary"
             style={{
               fontSize: "0.9rem",
               fontWeight: "500",
@@ -169,12 +148,7 @@ export default function NewFormPage() {
             type="url"
             id="redirectUrl"
             name="redirectUrl"
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
+            className="glass-input"
           />
         </div>
 
@@ -187,6 +161,7 @@ export default function NewFormPage() {
         >
           <label
             htmlFor="zapierHookUrl"
+            className="text-primary"
             style={{
               fontSize: "0.9rem",
               fontWeight: "500",
@@ -198,12 +173,7 @@ export default function NewFormPage() {
             type="url"
             id="zapierHookUrl"
             name="zapierHookUrl"
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
+            className="glass-input"
           />
         </div>
 
@@ -216,6 +186,7 @@ export default function NewFormPage() {
         >
           <label
             htmlFor="backgroundImageUrl"
+            className="text-primary"
             style={{
               fontSize: "0.9rem",
               fontWeight: "500",
@@ -227,12 +198,7 @@ export default function NewFormPage() {
             type="url"
             id="backgroundImageUrl"
             name="backgroundImageUrl"
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
+            className="glass-input"
           />
         </div>
 
@@ -245,28 +211,15 @@ export default function NewFormPage() {
         >
           <button
             type="submit"
-            style={{
-              padding: "0.75rem 1.5rem",
-              backgroundColor: "#0066cc",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "1rem",
-              fontWeight: "500",
-              cursor: "pointer",
-            }}
+            className="btn-glass btn-glass-primary liquid-shine"
           >
             Create Form
           </button>
           <Link
             href="/admin/qanda/forms"
+            className="btn-glass btn-glass-outline"
             style={{
-              padding: "0.75rem 1.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
               textDecoration: "none",
-              color: "#000",
-              fontSize: "1rem",
               display: "flex",
               alignItems: "center",
             }}

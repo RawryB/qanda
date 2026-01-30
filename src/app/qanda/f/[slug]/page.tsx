@@ -196,31 +196,15 @@ export default function QandaRunnerPage() {
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             required={currentQuestion.required}
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
+            className="glass-input"
           />
         );
 
       case "yesno":
         return (
-          <div
-            style={{
-              display: "flex",
-              gap: "1rem",
-            }}
-          >
+          <div className="glass-radio-group">
             <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                cursor: "pointer",
-              }}
+              className={`glass-radio-option ${answer === "yes" ? "selected" : ""}`}
             >
               <input
                 type="radio"
@@ -229,16 +213,12 @@ export default function QandaRunnerPage() {
                 checked={answer === "yes"}
                 onChange={(e) => setAnswer(e.target.value)}
                 required={currentQuestion.required}
+                style={{ marginRight: "0.5rem" }}
               />
               Yes
             </label>
             <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                cursor: "pointer",
-              }}
+              className={`glass-radio-option ${answer === "no" ? "selected" : ""}`}
             >
               <input
                 type="radio"
@@ -247,6 +227,7 @@ export default function QandaRunnerPage() {
                 checked={answer === "no"}
                 onChange={(e) => setAnswer(e.target.value)}
                 required={currentQuestion.required}
+                style={{ marginRight: "0.5rem" }}
               />
               No
             </label>
@@ -255,25 +236,11 @@ export default function QandaRunnerPage() {
 
       case "multi":
         return (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.5rem",
-            }}
-          >
+          <div className="glass-radio-group">
             {currentQuestion.choices?.map((choice) => (
               <label
                 key={choice.value}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  cursor: "pointer",
-                  padding: "0.5rem",
-                  border: "1px solid #ccc",
-                  borderRadius: "4px",
-                }}
+                className={`glass-radio-option ${answer === choice.value ? "selected" : ""}`}
               >
                 <input
                   type="radio"
@@ -282,6 +249,7 @@ export default function QandaRunnerPage() {
                   checked={answer === choice.value}
                   onChange={(e) => setAnswer(e.target.value)}
                   required={currentQuestion.required}
+                  style={{ marginRight: "0.5rem" }}
                 />
                 {choice.label}
               </label>
@@ -295,17 +263,11 @@ export default function QandaRunnerPage() {
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             required={currentQuestion.required}
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
+            className="glass-select"
           >
             <option value="">Select an option...</option>
             {currentQuestion.choices?.map((choice) => (
-              <option key={choice.value} value={choice.value}>
+              <option key={choice.value} value={choice.value} style={{ background: "#1e3a8a", color: "white" }}>
                 {choice.label}
               </option>
             ))}
@@ -316,21 +278,6 @@ export default function QandaRunnerPage() {
         return null;
     }
   };
-
-  if (state === "loading") {
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "100vh",
-        }}
-      >
-        <p>Loading...</p>
-      </div>
-    );
-  }
 
   // Container style with background image
   const containerStyle: React.CSSProperties = {
@@ -345,10 +292,27 @@ export default function QandaRunnerPage() {
       : {}),
   };
 
+  if (state === "loading") {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+        }}
+        className="text-primary"
+      >
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   if (state === "start") {
     return (
       <div style={containerStyle}>
         <div
+          className="glass-card-prominent fade-in-up"
           style={{
             display: "flex",
             flexDirection: "column",
@@ -357,44 +321,29 @@ export default function QandaRunnerPage() {
             minHeight: "100vh",
             gap: "2rem",
             padding: "2rem",
+            maxWidth: "500px",
+            margin: "0 auto",
           }}
         >
-        <h1
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          {formName || "Loading..."}
-        </h1>
-        {error && (
-          <p
+          <h1 className="gradient-text" style={{ fontSize: "2rem", fontWeight: "bold", margin: 0 }}>
+            {formName || "Loading..."}
+          </h1>
+          {error && (
+            <p style={{ color: "#f5576c", fontSize: "1rem" }}>
+              {error}
+            </p>
+          )}
+          <button
+            onClick={handleStart}
+            disabled={isSubmitting}
+            className="btn-glass btn-glass-primary liquid-shine"
             style={{
-              color: "#dc2626",
-              fontSize: "1rem",
+              cursor: isSubmitting ? "not-allowed" : "pointer",
+              opacity: isSubmitting ? 0.6 : 1,
             }}
           >
-            {error}
-          </p>
-        )}
-        <button
-          onClick={handleStart}
-          disabled={isSubmitting}
-          style={{
-            padding: "0.75rem 2rem",
-            backgroundColor: "#0066cc",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "1rem",
-            fontWeight: "500",
-            cursor: isSubmitting ? "not-allowed" : "pointer",
-            opacity: isSubmitting ? 0.6 : 1,
-          }}
-        >
-          {isSubmitting ? "Starting..." : "Start"}
-        </button>
+            {isSubmitting ? "Starting..." : "Start"}
+          </button>
         </div>
       </div>
     );
@@ -406,106 +355,85 @@ export default function QandaRunnerPage() {
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
-            maxWidth: "600px",
-            margin: "2rem auto",
-            gap: "1.5rem",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
             padding: "2rem",
-            backgroundColor: backgroundImageUrl ? "rgba(255, 255, 255, 0.85)" : "transparent",
-            borderRadius: backgroundImageUrl ? "8px" : "0",
           }}
         >
-        <h2
-          style={{
-            fontSize: "1.5rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          {currentQuestion.renderedTitle ?? currentQuestion.title}
-        </h2>
-
-        {(currentQuestion.renderedHelpText ?? currentQuestion.helpText) && (
-          <p
-            style={{
-              fontSize: "1rem",
-              color: "#666",
-              margin: 0,
-            }}
-          >
-            {currentQuestion.renderedHelpText ?? currentQuestion.helpText}
-          </p>
-        )}
-
-        {error && (
-          <p
-            style={{
-              color: "#dc2626",
-              fontSize: "0.9rem",
-            }}
-          >
-            {error}
-          </p>
-        )}
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleNext();
-          }}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-          }}
-        >
-          {renderInput()}
-
           <div
+            className="glass-card-prominent fade-in-up"
             style={{
               display: "flex",
-              gap: "1rem",
-              marginTop: "1rem",
+              flexDirection: "column",
+              maxWidth: "600px",
+              width: "100%",
+              gap: "1.5rem",
             }}
           >
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={isSubmitting || stepIndex === 0}
+          <h2 className="text-primary" style={{ fontSize: "1.5rem", fontWeight: "bold", margin: 0 }}>
+            {currentQuestion.renderedTitle ?? currentQuestion.title}
+          </h2>
+
+          {(currentQuestion.renderedHelpText ?? currentQuestion.helpText) && (
+            <p className="text-secondary" style={{ fontSize: "1rem", margin: 0 }}>
+              {currentQuestion.renderedHelpText ?? currentQuestion.helpText}
+            </p>
+          )}
+
+          {error && (
+            <p style={{ color: "#f5576c", fontSize: "0.9rem" }}>
+              {error}
+            </p>
+          )}
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleNext();
+            }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem",
+            }}
+          >
+            {renderInput()}
+
+            <div
               style={{
-                padding: "0.75rem 1.5rem",
-                backgroundColor: stepIndex === 0 ? "#e5e5e5" : "#fff",
-                color: stepIndex === 0 ? "#999" : "#000",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                fontSize: "1rem",
-                fontWeight: "500",
-                cursor: stepIndex === 0 || isSubmitting ? "not-allowed" : "pointer",
-                opacity: stepIndex === 0 || isSubmitting ? 0.6 : 1,
+                display: "flex",
+                gap: "1rem",
+                marginTop: "1rem",
               }}
             >
-              Back
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              style={{
-                padding: "0.75rem 1.5rem",
-                backgroundColor: "#0066cc",
-                color: "#fff",
-                border: "none",
-                borderRadius: "4px",
-                fontSize: "1rem",
-                fontWeight: "500",
-                cursor: isSubmitting ? "not-allowed" : "pointer",
-                opacity: isSubmitting ? 0.6 : 1,
-                flex: 1,
-              }}
-            >
-              {isSubmitting ? "Saving..." : "Next"}
-            </button>
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={isSubmitting || stepIndex === 0}
+                className="btn-glass btn-glass-outline"
+                style={{
+                  cursor: stepIndex === 0 || isSubmitting ? "not-allowed" : "pointer",
+                  opacity: stepIndex === 0 || isSubmitting ? 0.6 : 1,
+                }}
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="btn-glass btn-glass-primary liquid-shine"
+                style={{
+                  cursor: isSubmitting ? "not-allowed" : "pointer",
+                  opacity: isSubmitting ? 0.6 : 1,
+                  flex: 1,
+                }}
+              >
+                {isSubmitting ? "Saving..." : "Next"}
+              </button>
+            </div>
+          </form>
           </div>
-        </form>
         </div>
       </div>
     );
@@ -515,6 +443,7 @@ export default function QandaRunnerPage() {
     return (
       <div style={containerStyle}>
         <div
+          className="glass-card-prominent fade-in-up"
           style={{
             display: "flex",
             flexDirection: "column",
@@ -523,25 +452,16 @@ export default function QandaRunnerPage() {
             minHeight: "100vh",
             gap: "1rem",
             padding: "2rem",
+            maxWidth: "500px",
+            margin: "0 auto",
           }}
         >
-        <h1
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          Done
-        </h1>
-        <p
-          style={{
-            fontSize: "1rem",
-            color: "#666",
-          }}
-        >
-          Thank you for your submission!
-        </p>
+          <h1 className="gradient-text" style={{ fontSize: "2rem", fontWeight: "bold", margin: 0 }}>
+            Done
+          </h1>
+          <p className="text-secondary" style={{ fontSize: "1rem" }}>
+            Thank you for your submission!
+          </p>
         </div>
       </div>
     );

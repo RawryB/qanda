@@ -23,12 +23,12 @@ export default async function AdminLayout({
     >
       {/* Left Sidebar Navigation */}
       <aside
+        className="glass-card-subtle"
         style={{
           width: "240px",
           minHeight: "100vh",
-          borderRight: "1px solid #e5e5e5",
           padding: "2rem 1rem",
-          backgroundColor: "#fafafa",
+          marginRight: "1rem",
         }}
       >
         <nav
@@ -40,26 +40,30 @@ export default async function AdminLayout({
         >
           <Link
             href="/"
+            className="text-primary"
             style={{
               padding: "0.75rem 1rem",
-              color: "#0066cc",
               textDecoration: "none",
               fontSize: "0.9rem",
               fontWeight: "400",
-              borderRadius: "4px",
+              borderRadius: "8px",
+              transition: "all 250ms ease",
+              display: "block",
             }}
           >
             SwimFast
           </Link>
           <Link
             href="/admin/qanda"
+            className="text-primary"
             style={{
               padding: "0.75rem 1rem",
-              color: "#000",
               textDecoration: "none",
               fontSize: "1rem",
               fontWeight: "500",
-              borderRadius: "4px",
+              borderRadius: "8px",
+              transition: "all 250ms ease",
+              display: "block",
             }}
           >
             Qanda
