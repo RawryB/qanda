@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { fireZapierOnCompletion } from "@/lib/qanda/webhook";
 
 export async function POST(request: Request) {
   try {
@@ -32,6 +33,11 @@ export async function POST(request: Request) {
         status: "completed",
         completedAt: new Date(),
       },
+    });
+
+    // Fire webhook (best-effort, don't await to block response)
+    fireZapierOnCompletion(submissionId).catch((err) => {
+      console.error("Webhook error (non-blocking):", err);
     });
 
     // Return redirect URL (do not expose zapierHookUrl)

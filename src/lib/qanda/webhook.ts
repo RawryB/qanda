@@ -1,0 +1,177 @@
+import { prisma } from "@/lib/prisma";
+
+/**
+ * Fires a webhook to Zapier when a submission is completed.
+ * Best-effort: does not throw errors that would break the caller.
+ */
+export async function fireZapierOnCompletion(submissionId: string): Promise<void> {
+  try {
+    // Load submission with form and answers
+    const submission = await prisma.qandaSubmission.findUnique({
+      where: { id: submissionId },
+      include: {
+        form: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            zapierHookUrl: true,
+          },
+        },
+        answers: {
+          include: {
+            question: {
+              select: {
+                id: true,
+                key: true,
+                title: true,
+                type: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!submission) {
+      // Submission not found, silently return
+      return;
+    }
+
+    // If no zapierHookUrl, return silently
+    if (!submission.form.zapierHookUrl) {
+      return;
+    }
+
+    const zapierHookUrl = submission.form.zapierHookUrl;
+
+    // Build payload
+    const values: Record<string, any> = {};
+    const answers = submission.answers.map((answer) => {
+      // Determine value for answer
+      let value: any = null;
+      if (answer.valueText !== null && answer.valueText !== undefined) {
+        value = answer.valueText;
+      } else if (answer.valueJson !== null && answer.valueJson !== undefined) {
+        if (typeof answer.valueJson === "boolean") {
+          value = answer.valueJson;
+        } else if (typeof answer.valueJson === "string" || typeof answer.valueJson === "number") {
+          value = answer.valueJson;
+        }
+      }
+
+      // Add to values map for convenience
+      if (value !== null) {
+        values[answer.question.key] = value;
+      }
+
+      return {
+        questionId: answer.question.id,
+        key: answer.question.key,
+        title: answer.question.title,
+        type: answer.question.type,
+        value,
+      };
+    });
+
+    const payload = {
+      event: "qanda.submission.completed",
+      submissionId: submission.id,
+      form: {
+        id: submission.form.id,
+        slug: submission.form.slug,
+        name: submission.form.name,
+      },
+      completedAt: submission.completedAt?.toISOString() || null,
+      answers,
+      values,
+    };
+
+    // Retry logic: up to 3 attempts with backoff
+    const maxAttempts = 3;
+    const backoffDelays = [0, 500, 1500]; // ms
+    const timeoutMs = 8000; // 8 seconds
+
+    let lastError: Error | null = null;
+    let lastStatusCode: number | null = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        // Wait for backoff delay (except first attempt)
+        if (attempt > 1) {
+          await new Promise((resolve) => setTimeout(resolve, backoffDelays[attempt - 1]));
+        }
+
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          const response = await fetch(zapierHookUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+          lastStatusCode = response.status;
+
+          // Log attempt
+          await prisma.qandaWebhookAttempt.create({
+            data: {
+              submissionId: submission.id,
+              formId: submission.formId,
+              url: zapierHookUrl,
+              attempt,
+              statusCode: response.status,
+              success: response.status >= 200 && response.status < 300,
+              error: response.status >= 300 ? `HTTP ${response.status}` : null,
+            },
+          });
+
+          // Success (2xx)
+          if (response.status >= 200 && response.status < 300) {
+            return; // Success, exit function
+          }
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId);
+
+          // Handle abort (timeout)
+          if (fetchError.name === "AbortError") {
+            lastError = new Error("Request timeout after 8 seconds");
+          } else {
+            lastError = fetchError;
+          }
+
+          // Log attempt with error
+          await prisma.qandaWebhookAttempt.create({
+            data: {
+              submissionId: submission.id,
+              formId: submission.formId,
+              url: zapierHookUrl,
+              attempt,
+              statusCode: null,
+              success: false,
+              error: lastError.message || "Unknown error",
+            },
+          });
+        }
+      } catch (logError: any) {
+        // If logging fails, continue to next attempt
+        console.error("Failed to log webhook attempt:", logError);
+      }
+    }
+
+    // All attempts failed, but don't throw - best effort
+    console.error(
+      `Webhook failed after ${maxAttempts} attempts for submission ${submissionId}`,
+      lastError
+    );
+  } catch (error: any) {
+    // Catch-all: don't throw errors that would break the caller
+    console.error("Error in fireZapierOnCompletion:", error);
+  }
+}

@@ -23,6 +23,7 @@ model QandaForm {
   questions     QandaQuestion[]
   submissions   QandaSubmission[]
   logicRules    QandaLogicRule[]
+  webhookAttempts QandaWebhookAttempt[]
 }
 
 model QandaQuestion {
@@ -67,6 +68,7 @@ model QandaSubmission {
   completedAt DateTime?
   form        QandaForm     @relation(fields: [formId], references: [id], onDelete: Cascade)
   answers     QandaAnswer[]
+  webhookAttempts QandaWebhookAttempt[]
   @@index([formId, startedAt])
 }
 
@@ -97,4 +99,22 @@ model QandaLogicRule {
   sourceQuestion      QandaQuestion @relation("SourceQuestion", fields: [sourceQuestionId], references: [id], onDelete: Cascade)
 
   @@index([formId, sourceQuestionId, priority])
+}
+
+model QandaWebhookAttempt {
+  id           String   @id @default(cuid())
+  submissionId String
+  formId       String
+  url          String
+  attempt      Int
+  statusCode   Int?
+  success      Boolean  @default(false)
+  error        String?
+  createdAt    DateTime @default(now())
+
+  submission   QandaSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  form         QandaForm       @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId, createdAt])
+  @@index([formId, createdAt])
 }

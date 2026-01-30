@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { renderTemplate } from "@/lib/qanda/template";
 import { answersToValueMap } from "@/lib/qanda/answers";
+import { fireZapierOnCompletion } from "@/lib/qanda/webhook";
 
 function validateAnswer(value: any, question: any): { valid: boolean; error?: string } {
   if (question.required && (!value || value === "")) {
@@ -218,13 +219,27 @@ export async function POST(request: Request) {
         matchedRule = null;
       } else if (matchedRule.isEnd) {
         // End the form
-        await prisma.qandaSubmission.update({
+        // Check if already completed to avoid duplicate webhook calls
+        const currentSubmission = await prisma.qandaSubmission.findUnique({
           where: { id: submissionId },
-          data: {
-            status: "completed",
-            completedAt: new Date(),
-          },
+          select: { status: true },
         });
+
+        if (currentSubmission?.status === "in_progress") {
+          await prisma.qandaSubmission.update({
+            where: { id: submissionId },
+            data: {
+              status: "completed",
+              completedAt: new Date(),
+            },
+          });
+
+          // Fire webhook (best-effort, don't await to block response)
+          fireZapierOnCompletion(submissionId).catch((err) => {
+            console.error("Webhook error (non-blocking):", err);
+          });
+        }
+
         // Reload submission to get form with redirectUrl
         const completedSubmission = await prisma.qandaSubmission.findUnique({
           where: { id: submissionId },
@@ -322,13 +337,27 @@ export async function POST(request: Request) {
       });
     } else {
       // No more questions, complete the submission
-      await prisma.qandaSubmission.update({
+      // Check if already completed to avoid duplicate webhook calls
+      const currentSubmission = await prisma.qandaSubmission.findUnique({
         where: { id: submissionId },
-        data: {
-          status: "completed",
-          completedAt: new Date(),
-        },
+        select: { status: true },
       });
+
+      if (currentSubmission?.status === "in_progress") {
+        await prisma.qandaSubmission.update({
+          where: { id: submissionId },
+          data: {
+            status: "completed",
+            completedAt: new Date(),
+          },
+        });
+
+        // Fire webhook (best-effort, don't await to block response)
+        fireZapierOnCompletion(submissionId).catch((err) => {
+          console.error("Webhook error (non-blocking):", err);
+        });
+      }
+
       // Reload submission to get form with redirectUrl
       const completedSubmission = await prisma.qandaSubmission.findUnique({
         where: { id: submissionId },
