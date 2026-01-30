@@ -52,16 +52,37 @@ export default async function EditFormPage({
         >
           Edit Form
         </h1>
-        <Link
-          href="/admin/qanda/forms"
+        <div
           style={{
-            color: "#0066cc",
-            textDecoration: "underline",
-            fontSize: "0.9rem",
+            display: "flex",
+            gap: "1rem",
+            alignItems: "center",
           }}
         >
-          Back to forms
-        </Link>
+          <Link
+            href={`/admin/qanda/submissions?formId=${id}`}
+            style={{
+              padding: "0.5rem 1rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              textDecoration: "none",
+              color: "#000",
+              fontSize: "0.9rem",
+            }}
+          >
+            View submissions
+          </Link>
+          <Link
+            href="/admin/qanda/forms"
+            style={{
+              color: "#0066cc",
+              textDecoration: "underline",
+              fontSize: "0.9rem",
+            }}
+          >
+            Back to forms
+          </Link>
+        </div>
       </div>
 
       <form
