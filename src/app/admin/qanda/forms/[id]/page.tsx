@@ -406,117 +406,111 @@ export default async function EditFormPage({
                   borderRadius: "4px",
                   padding: "1rem",
                   display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  flexDirection: "column",
+                  gap: "0.75rem",
                 }}
               >
+                {/* Top Row: Question Text */}
                 <div
                   style={{
                     display: "flex",
-                    flexDirection: "column",
                     gap: "0.5rem",
-                    flex: 1,
+                    alignItems: "center",
                   }}
                 >
-                  <div
+                  <span
                     style={{
-                      display: "flex",
-                      gap: "1rem",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "0.9rem",
-                        color: "#333",
-                        fontWeight: "500",
-                      }}
-                    >
-                      #{question.order + 1}
-                    </span>
-                    <Link
-                      href={`/admin/qanda/forms/${id}/questions/${question.id}`}
-                      style={{
-                        fontSize: "1.1rem",
-                        fontWeight: "500",
-                        color: "#0066cc",
-                        textDecoration: "none",
-                      }}
-                    >
-                      {question.title}
-                    </Link>
-                    <span
-                      style={{
-                        padding: "0.25rem 0.5rem",
-                        backgroundColor: "#e5e5e5",
-                        borderRadius: "4px",
-                        fontSize: "0.75rem",
-                        textTransform: "uppercase",
-                        color: "#000",
-                        fontWeight: "500",
-                      }}
-                    >
-                      {question.type}
-                    </span>
-                    {question.required && (
-                      <span
-                        style={{
-                          padding: "0.25rem 0.5rem",
-                          backgroundColor: "#fee",
-                          borderRadius: "4px",
-                          fontSize: "0.75rem",
-                          color: "#c33",
-                          fontWeight: "500",
-                        }}
-                      >
-                        Required
-                      </span>
-                    )}
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "1rem",
                       fontSize: "0.9rem",
                       color: "#333",
+                      fontWeight: "500",
                     }}
                   >
-                    <span>Key: <strong>{question.key}</strong></span>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <MoveQuestionButton
-                    formId={id}
-                    questionId={question.id}
-                    direction="up"
-                    disabled={question.order === 0}
-                  />
-                  <MoveQuestionButton
-                    formId={id}
-                    questionId={question.id}
-                    direction="down"
-                    disabled={question.order === questions.length - 1}
-                  />
+                      #{question.order + 1}
+                    </span>
                   <Link
                     href={`/admin/qanda/forms/${id}/questions/${question.id}`}
                     style={{
-                      padding: "0.5rem 1rem",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
+                      fontSize: "1.1rem",
+                      fontWeight: "500",
+                      color: "#fff",
                       textDecoration: "none",
-                      color: "#000",
-                      backgroundColor: "#fff",
-                      fontSize: "0.9rem",
+                      flex: 1,
                     }}
                   >
-                    Edit
+                    {question.title}
                   </Link>
-                  <DeleteQuestionButton questionId={question.id} questionTitle={question.title} />
+                </div>
+                
+                {/* Bottom Row: Type Badge / Required Badge / Action Buttons */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "0.5rem",
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      padding: "0.25rem 0.5rem",
+                      backgroundColor: "#e5e5e5",
+                      borderRadius: "4px",
+                      fontSize: "0.75rem",
+                      textTransform: "uppercase",
+                      color: "#000",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {question.type}
+                  </span>
+                  {question.required && (
+                    <span
+                      style={{
+                        padding: "0.25rem 0.5rem",
+                        backgroundColor: "#fee",
+                        borderRadius: "4px",
+                        fontSize: "0.75rem",
+                        color: "#c33",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Required
+                    </span>
+                  )}
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "0.5rem",
+                      marginLeft: "auto",
+                    }}
+                  >
+                    <MoveQuestionButton
+                      formId={id}
+                      questionId={question.id}
+                      direction="up"
+                      disabled={question.order === 0}
+                    />
+                    <MoveQuestionButton
+                      formId={id}
+                      questionId={question.id}
+                      direction="down"
+                      disabled={question.order === questions.length - 1}
+                    />
+                    <Link
+                      href={`/admin/qanda/forms/${id}/questions/${question.id}`}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        border: "1px solid #ccc",
+                        borderRadius: "4px",
+                        textDecoration: "none",
+                        color: "#000",
+                        backgroundColor: "#fff",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      Edit
+                    </Link>
+                    <DeleteQuestionButton questionId={question.id} questionTitle={question.title} />
+                  </div>
                 </div>
               </div>
             ))}

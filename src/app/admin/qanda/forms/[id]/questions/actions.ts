@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-const QUESTION_TYPES = ["text", "email", "phone", "yesno", "multi", "dropdown"];
+const QUESTION_TYPES = ["text", "email", "phone", "yesno", "multi", "dropdown", "instruction"];
 
 export async function createQuestion(formId: string, formData: FormData) {
   const type = formData.get("type") as string;
@@ -59,7 +59,8 @@ export async function updateQuestion(questionId: string, formData: FormData) {
   const key = formData.get("key") as string;
   const title = formData.get("title") as string;
   const helpText = formData.get("helpText") as string | null;
-  const required = formData.get("required") === "on";
+  // Instruction questions are never required
+  const required = type === "instruction" ? false : formData.get("required") === "on";
 
   // Validate type
   if (!QUESTION_TYPES.includes(type)) {

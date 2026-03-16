@@ -1,69 +1,25 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { getQuestion, updateQuestion } from "../actions";
-import { ChoiceManager } from "./components/ChoiceManager";
-import { DeleteQuestionButton } from "./components/DeleteQuestionButton";
 
-export default async function EditQuestionPage({
-  params,
+export function QuestionEditForm({
+  question,
+  formId,
+  action,
 }: {
-  params: Promise<{ id: string; questionId: string }>;
+  question: any;
+  formId: string;
+  action: (formData: FormData) => Promise<void>;
 }) {
-  const { id, questionId } = await params;
-  const question = await getQuestion(questionId);
+  const [type, setType] = useState(question.type);
 
-  if (!question) {
-    notFound();
-  }
-
-  async function handleUpdate(formData: FormData) {
-    "use server";
-    try {
-      await updateQuestion(questionId, formData);
-    } catch (error: any) {
-      throw error;
-    }
-  }
+  const isInstruction = type === "instruction";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "2rem",
-        maxWidth: "600px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          Edit Question
-        </h1>
-        <Link
-          href={`/admin/qanda/forms/${id}`}
-          style={{
-            color: "#0066cc",
-            textDecoration: "underline",
-            fontSize: "0.9rem",
-          }}
-        >
-          Back to form
-        </Link>
-      </div>
-
+    <>
       <form
-        action={handleUpdate}
+        action={action}
         style={{
           display: "flex",
           flexDirection: "column",
@@ -89,8 +45,9 @@ export default async function EditQuestionPage({
           <select
             id="type"
             name="type"
-            defaultValue={question.type}
             required
+            value={type}
+            onChange={(e) => setType(e.target.value)}
             style={{
               padding: "0.5rem",
               border: "1px solid #ccc",
@@ -209,7 +166,7 @@ export default async function EditQuestionPage({
           />
         </div>
 
-        {question.type !== "instruction" && (
+        {!isInstruction && (
           <div
             style={{
               display: "flex",
@@ -238,7 +195,7 @@ export default async function EditQuestionPage({
             </label>
           </div>
         )}
-        {question.type === "instruction" && <input type="hidden" name="required" value="" />}
+        {isInstruction && <input type="hidden" name="required" value="" />}
 
         <div
           style={{
@@ -263,7 +220,7 @@ export default async function EditQuestionPage({
             Save Changes
           </button>
           <Link
-            href={`/admin/qanda/forms/${id}`}
+            href={`/admin/qanda/forms/${formId}`}
             style={{
               padding: "0.75rem 1.5rem",
               border: "1px solid #ccc",
@@ -277,22 +234,8 @@ export default async function EditQuestionPage({
           >
             Cancel
           </Link>
-          <DeleteQuestionButton questionId={questionId} formId={id} />
         </div>
       </form>
-
-      {/* Choices Section (only for multi/dropdown) */}
-      {(question.type === "multi" || question.type === "dropdown") && (
-        <div
-          style={{
-            marginTop: "3rem",
-            paddingTop: "2rem",
-            borderTop: "1px solid #e5e5e5",
-          }}
-        >
-          <ChoiceManager questionId={questionId} choices={question.choices} />
-        </div>
-      )}
-    </div>
+    </>
   );
 }

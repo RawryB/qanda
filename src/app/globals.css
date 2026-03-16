@@ -23,10 +23,13 @@
   --blur-md: 20px;
   --blur-lg: 30px;
   
-  /* Colors - Accent Gradients */
-  --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --accent-gradient-alt: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --accent-gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  /* Colors - Orange Accent */
+  --orange-primary: #FF6B35;
+  --orange-dark: #E85A2B;
+  --orange-light: #FF8C5A;
+  --accent-gradient: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%);
+  --accent-gradient-alt: linear-gradient(135deg, #E85A2B 0%, #FF6B35 100%);
+  --banner-gradient: linear-gradient(135deg, #D97757 0%, #C85A3A 100%);
   
   /* Text Colors */
   --text-primary: rgba(255, 255, 255, 0.95);
@@ -100,12 +103,10 @@ body {
 }
 
 .glass-card-prominent {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(var(--blur-lg));
-  -webkit-backdrop-filter: blur(var(--blur-lg));
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(26, 40, 53, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-lg);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   padding: var(--space-xl);
 }
 
@@ -113,10 +114,8 @@ body {
    FORM ELEMENTS
    ------------------------------------------ */
 .glass-input {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--blur-sm));
-  -webkit-backdrop-filter: blur(var(--blur-sm));
-  border: 1px solid var(--glass-border);
+  background: rgba(26, 40, 53, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
   color: var(--text-primary);
@@ -160,10 +159,8 @@ body {
 }
 
 .glass-select {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--blur-sm));
-  -webkit-backdrop-filter: blur(var(--blur-sm));
-  border: 1px solid var(--glass-border);
+  background: rgba(26, 40, 53, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
   color: var(--text-primary);
@@ -211,12 +208,15 @@ body {
 .btn-glass-primary {
   background: var(--accent-gradient);
   border: none;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+  color: white;
+  font-weight: 600;
 }
 
 .btn-glass-primary:hover {
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5);
   transform: translateY(-2px);
+  background: linear-gradient(135deg, #FF8C5A 0%, #FF6B35 100%);
 }
 
 .btn-glass-outline {
@@ -258,9 +258,10 @@ body {
 .glass-progress-bar {
   background: rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-full);
-  height: 8px;
+  height: 6px;
   overflow: hidden;
   position: relative;
+  width: 100%;
 }
 
 .glass-progress-fill {
@@ -305,10 +306,8 @@ body {
 
 .glass-radio-option,
 .glass-checkbox-option {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--blur-sm));
-  -webkit-backdrop-filter: blur(var(--blur-sm));
-  border: 1px solid var(--glass-border);
+  background: rgba(26, 40, 53, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);
   padding: var(--space-md);
   cursor: pointer;
@@ -377,6 +376,94 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.orange-text {
+  color: var(--orange-primary);
+}
+
+/* Runner-specific styles */
+.runner-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem 1rem;
+  gap: 1rem;
+}
+
+.runner-logo {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-banner {
+  background: var(--banner-gradient);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.5rem;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+}
+
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  margin: 0;
+}
+
+.hero-description {
+  font-size: 1.125rem;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 600px;
+  margin: 0;
+}
+
+.sample-result-card {
+  background: rgba(26, 40, 53, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  max-width: 600px;
+  width: 100%;
+}
+
+.sample-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sample-result-row:last-child {
+  border-bottom: none;
+}
+
+.sample-result-label {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.sample-result-value {
+  color: var(--orange-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.form-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem 0;
+  color: var(--text-primary);
 }
 
 /* ------------------------------------------

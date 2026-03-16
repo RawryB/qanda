@@ -85,6 +85,11 @@ export async function POST(request: Request) {
       },
     });
 
+    // Get total question count for progress calculation
+    const totalQuestions = await prisma.qandaQuestion.count({
+      where: { formId: submission.formId },
+    });
+
     // Build value map for template rendering
     const values = answersToValueMap(allAnswers);
 
@@ -118,6 +123,7 @@ export async function POST(request: Request) {
         })),
       },
       stepIndex: newCurrentStep.stepIndex,
+      totalQuestions,
       existingAnswer: existingAnswerValue !== null ? { valueText: existingAnswer?.valueText || null, valueJson: existingAnswer?.valueJson || null } : null,
     });
   } catch (error: any) {

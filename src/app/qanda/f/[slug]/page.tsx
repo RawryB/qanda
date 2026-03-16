@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 
 type Question = {
   id: string;
@@ -27,6 +28,7 @@ export default function QandaRunnerPage() {
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [stepIndex, setStepIndex] = useState<number>(0);
+  const [totalQuestions, setTotalQuestions] = useState<number>(0);
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,6 +78,9 @@ export default function QandaRunnerPage() {
       if (data.form?.backgroundImageUrl) {
         setBackgroundImageUrl(data.form.backgroundImageUrl);
       }
+      if (data.totalQuestions) {
+        setTotalQuestions(data.totalQuestions);
+      }
       setCurrentQuestion(data.question);
       setStepIndex(data.stepIndex ?? 0);
       setState("question");
@@ -99,7 +104,7 @@ export default function QandaRunnerPage() {
         body: JSON.stringify({
           submissionId,
           questionId: currentQuestion.id,
-          value: answer,
+          value: currentQuestion.type === "instruction" ? null : answer,
         }),
       });
 
@@ -121,6 +126,9 @@ export default function QandaRunnerPage() {
         // Move to next question
         setCurrentQuestion(data.nextQuestion);
         setStepIndex(data.stepIndex ?? stepIndex + 1);
+        if (data.totalQuestions) {
+          setTotalQuestions(data.totalQuestions);
+        }
         setAnswer("");
       }
     } catch (err: any) {
@@ -157,6 +165,9 @@ export default function QandaRunnerPage() {
       // Update question and stepIndex
       setCurrentQuestion(data.question);
       setStepIndex(data.stepIndex);
+      if (data.totalQuestions) {
+        setTotalQuestions(data.totalQuestions);
+      }
 
       // Prefill answer if existingAnswer exists
       if (data.existingAnswer) {
@@ -187,6 +198,10 @@ export default function QandaRunnerPage() {
     if (!currentQuestion) return null;
 
     switch (currentQuestion.type) {
+      case "instruction":
+        // Instruction questions have no input
+        return null;
+
       case "text":
       case "email":
       case "phone":
@@ -312,27 +327,41 @@ export default function QandaRunnerPage() {
     return (
       <div style={containerStyle}>
         <div
-          className="glass-card-prominent fade-in-up"
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
             minHeight: "100vh",
-            gap: "2rem",
-            padding: "2rem",
-            maxWidth: "500px",
+            padding: "2rem 1rem",
+            maxWidth: "800px",
             margin: "0 auto",
+            gap: "2rem",
           }}
         >
-          <h1 className="gradient-text" style={{ fontSize: "2rem", fontWeight: "bold", margin: 0 }}>
-            {formName || "Loading..."}
-          </h1>
-          {error && (
-            <p style={{ color: "#f5576c", fontSize: "1rem" }}>
-              {error}
+          {/* Header with Logo */}
+          <div className="runner-header">
+            <div className="runner-logo">
+              <Image
+                src="/sflogotrans.png"
+                alt="SF Logo"
+                width={60}
+                height={60}
+                style={{ objectFit: "contain" }}
+              />
+            </div>
+          </div>
+
+          {/* Hero Section */}
+          <div style={{ textAlign: "center", maxWidth: "700px", width: "100%" }}>
+            <h1 className="hero-title orange-text" style={{ marginBottom: "1rem" }}>
+              {formName || "SF Coaching"}
+            </h1>
+            <p className="hero-description">
+              Thanks for you interest in coaching, answering these questions will give me the best insights into how I can best help you Swim Faster. Should only take a few minutes and I'll get back to you ASAP.
             </p>
-          )}
+          </div>
+
+          {/* Start Button */}
           <button
             onClick={handleStart}
             disabled={isSubmitting}
@@ -340,99 +369,146 @@ export default function QandaRunnerPage() {
             style={{
               cursor: isSubmitting ? "not-allowed" : "pointer",
               opacity: isSubmitting ? 0.6 : 1,
+              padding: "1rem 2.5rem",
+              fontSize: "1.125rem",
+              fontWeight: "600",
+              minWidth: "200px",
             }}
           >
-            {isSubmitting ? "Starting..." : "Start"}
+            {isSubmitting ? "Starting..." : "3-2-1-Go"}
           </button>
+
+          {error && (
+            <p style={{ color: "#f5576c", fontSize: "1rem", textAlign: "center" }}>
+              {error}
+            </p>
+          )}
         </div>
       </div>
     );
   }
 
   if (state === "question" && currentQuestion) {
+    // Calculate progress percentage (rough estimate based on stepIndex)
+    const progressPercent = totalQuestions > 0 
+      ? Math.min(100, ((stepIndex + 1) / totalQuestions) * 100)
+      : 0;
+
     return (
       <div style={containerStyle}>
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
             minHeight: "100vh",
-            padding: "2rem",
+            padding: "2rem 1rem",
+            maxWidth: "800px",
+            margin: "0 auto",
+            gap: "2rem",
           }}
         >
+          {/* Header with Logo */}
+          <div className="runner-header">
+            <div className="runner-logo">
+              <Image
+                src="/sflogotrans.png"
+                alt="SF Logo"
+                width={60}
+                height={60}
+                style={{ objectFit: "contain" }}
+              />
+            </div>
+          </div>
+
+          {/* Form Card */}
           <div
             className="glass-card-prominent fade-in-up"
             style={{
               display: "flex",
               flexDirection: "column",
-              maxWidth: "600px",
               width: "100%",
               gap: "1.5rem",
             }}
           >
-          <h2 className="text-primary" style={{ fontSize: "1.5rem", fontWeight: "bold", margin: 0 }}>
-            {currentQuestion.renderedTitle ?? currentQuestion.title}
-          </h2>
+            {/* Progress Bar */}
+            <div className="glass-progress-bar" style={{ marginBottom: "0.5rem" }}>
+              <div
+                className="glass-progress-fill"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
 
-          {(currentQuestion.renderedHelpText ?? currentQuestion.helpText) && (
-            <p className="text-secondary" style={{ fontSize: "1rem", margin: 0 }}>
-              {currentQuestion.renderedHelpText ?? currentQuestion.helpText}
-            </p>
-          )}
+            {/* Section Title */}
+            <h2 className="form-section-title">
+              {currentQuestion.renderedTitle ?? currentQuestion.title}
+            </h2>
 
-          {error && (
-            <p style={{ color: "#f5576c", fontSize: "0.9rem" }}>
-              {error}
-            </p>
-          )}
+            {(currentQuestion.renderedHelpText ?? currentQuestion.helpText) && (
+              <p className="text-secondary" style={{ fontSize: "1rem", margin: 0, marginTop: "-1rem" }}>
+                {currentQuestion.renderedHelpText ?? currentQuestion.helpText}
+              </p>
+            )}
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleNext();
-            }}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "1rem",
-            }}
-          >
-            {renderInput()}
+            {error && (
+              <p style={{ color: "#f5576c", fontSize: "0.9rem", margin: 0 }}>
+                {error}
+              </p>
+            )}
 
-            <div
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleNext();
+              }}
               style={{
                 display: "flex",
-                gap: "1rem",
-                marginTop: "1rem",
+                flexDirection: "column",
+                gap: "1.5rem",
               }}
             >
-              <button
-                type="button"
-                onClick={handleBack}
-                disabled={isSubmitting || stepIndex === 0}
-                className="btn-glass btn-glass-outline"
+              {renderInput()}
+
+              <div
                 style={{
-                  cursor: stepIndex === 0 || isSubmitting ? "not-allowed" : "pointer",
-                  opacity: stepIndex === 0 || isSubmitting ? 0.6 : 1,
+                  display: "flex",
+                  gap: "1rem",
+                  marginTop: "0.5rem",
+                  flexDirection: currentQuestion.type === "instruction" ? "row-reverse" : "row",
                 }}
               >
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="btn-glass btn-glass-primary liquid-shine"
-                style={{
-                  cursor: isSubmitting ? "not-allowed" : "pointer",
-                  opacity: isSubmitting ? 0.6 : 1,
-                  flex: 1,
-                }}
-              >
-                {isSubmitting ? "Saving..." : "Next"}
-              </button>
-            </div>
-          </form>
+                {currentQuestion.type !== "instruction" && (
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    disabled={isSubmitting || stepIndex === 0}
+                    className="btn-glass btn-glass-outline"
+                    style={{
+                      cursor: stepIndex === 0 || isSubmitting ? "not-allowed" : "pointer",
+                      opacity: stepIndex === 0 || isSubmitting ? 0.6 : 1,
+                    }}
+                  >
+                    Back
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-glass btn-glass-primary liquid-shine"
+                  style={{
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                    opacity: isSubmitting ? 0.6 : 1,
+                    flex: currentQuestion.type === "instruction" ? 1 : undefined,
+                    width: currentQuestion.type === "instruction" ? "100%" : undefined,
+                    padding: "1rem 2.5rem",
+                    fontSize: "1.125rem",
+                    fontWeight: "600",
+                  }}
+                >
+                  {isSubmitting ? "Saving..." : "Next"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

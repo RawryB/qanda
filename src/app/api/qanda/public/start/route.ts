@@ -18,14 +18,12 @@ export async function POST(request: Request) {
       },
       include: {
         questions: {
-          where: {
-            order: 0, // First question
-          },
           include: {
             choices: {
               orderBy: { order: "asc" },
             },
           },
+          orderBy: { order: "asc" },
         },
       },
     });
@@ -38,6 +36,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Form has no questions" }, { status: 400 });
     }
 
+    // Get total question count
+    const totalQuestions = form.questions.length;
+
     // Create submission
     const submission = await prisma.qandaSubmission.create({
       data: {
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const firstQuestion = form.questions[0];
+    const firstQuestion = form.questions.find(q => q.order === 0) || form.questions[0];
 
     // Create first nav step with stepIndex=0
     await prisma.qandaNavStep.create({
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
         })),
       },
       stepIndex: 0,
+      totalQuestions,
       form: {
         name: form.name,
         slug: form.slug,

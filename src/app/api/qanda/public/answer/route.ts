@@ -5,6 +5,11 @@ import { answersToValueMap } from "@/lib/qanda/answers";
 import { fireZapierOnCompletion } from "@/lib/qanda/webhook";
 
 function validateAnswer(value: any, question: any): { valid: boolean; error?: string } {
+  // Instruction questions don't require validation or values
+  if (question.type === "instruction") {
+    return { valid: true };
+  }
+
   if (question.required && (!value || value === "")) {
     return { valid: false, error: "This field is required" };
   }
@@ -102,113 +107,116 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Fetch existing answer to check if it changed
-    const existingAnswer = await prisma.qandaAnswer.findUnique({
-      where: {
-        submissionId_questionId: {
-          submissionId,
-          questionId,
-        },
-      },
-    });
-
-    // Store answer (normalize for yesno: store both valueJson and valueText)
-    const answerData: any = {
-      submissionId,
-      questionId,
-    };
-
-    if (question.type === "yesno") {
-      const boolValue = value === "yes" || value === true;
-      answerData.valueJson = boolValue;
-      answerData.valueText = boolValue ? "true" : "false"; // Store as string for consistent evaluation
-    } else if (question.type === "multi" || question.type === "dropdown") {
-      answerData.valueText = value;
-    } else {
-      answerData.valueText = value;
-    }
-
-    // Determine if answer changed
-    let answerChanged = false;
-    if (!existingAnswer) {
-      // No previous answer, but new answer is non-null
-      answerChanged = answerData.valueText !== null && answerData.valueText !== undefined;
-    } else {
-      // Compare values
-      const oldValueText = existingAnswer.valueText;
-      const oldValueJson = existingAnswer.valueJson;
-      const newValueText = answerData.valueText;
-      const newValueJson = answerData.valueJson;
-
-      if (oldValueText !== newValueText) {
-        answerChanged = true;
-      } else if (oldValueJson !== newValueJson) {
-        // Compare JSON values (for yesno)
-        answerChanged = JSON.stringify(oldValueJson) !== JSON.stringify(newValueJson);
-      }
-    }
-
-    // If answer changed, truncate nav history and downstream answers
-    if (answerChanged) {
-      // Find the stepIndex for this questionId
-      const currentStep = await prisma.qandaNavStep.findFirst({
+    // For instruction questions, skip answer creation and proceed to next question
+    if (question.type !== "instruction") {
+      // Fetch existing answer to check if it changed
+      const existingAnswer = await prisma.qandaAnswer.findUnique({
         where: {
-          submissionId,
-          questionId,
-        },
-        orderBy: {
-          stepIndex: "desc",
+          submissionId_questionId: {
+            submissionId,
+            questionId,
+          },
         },
       });
 
-      if (currentStep) {
-        // Delete all nav steps with stepIndex > current stepIndex
-        const deletedSteps = await prisma.qandaNavStep.findMany({
+      // Store answer (normalize for yesno: store both valueJson and valueText)
+      const answerData: any = {
+        submissionId,
+        questionId,
+      };
+
+      if (question.type === "yesno") {
+        const boolValue = value === "yes" || value === true;
+        answerData.valueJson = boolValue;
+        answerData.valueText = boolValue ? "true" : "false"; // Store as string for consistent evaluation
+      } else if (question.type === "multi" || question.type === "dropdown") {
+        answerData.valueText = value;
+      } else {
+        answerData.valueText = value;
+      }
+
+      // Determine if answer changed
+      let answerChanged = false;
+      if (!existingAnswer) {
+        // No previous answer, but new answer is non-null
+        answerChanged = answerData.valueText !== null && answerData.valueText !== undefined;
+      } else {
+        // Compare values
+        const oldValueText = existingAnswer.valueText;
+        const oldValueJson = existingAnswer.valueJson;
+        const newValueText = answerData.valueText;
+        const newValueJson = answerData.valueJson;
+
+        if (oldValueText !== newValueText) {
+          answerChanged = true;
+        } else if (oldValueJson !== newValueJson) {
+          // Compare JSON values (for yesno)
+          answerChanged = JSON.stringify(oldValueJson) !== JSON.stringify(newValueJson);
+        }
+      }
+
+      // If answer changed, truncate nav history and downstream answers
+      if (answerChanged) {
+        // Find the stepIndex for this questionId
+        const currentStep = await prisma.qandaNavStep.findFirst({
           where: {
             submissionId,
-            stepIndex: {
-              gt: currentStep.stepIndex,
-            },
+            questionId,
+          },
+          orderBy: {
+            stepIndex: "desc",
           },
         });
 
-        // Collect questionIds from deleted steps
-        const downstreamQuestionIds = deletedSteps.map((step) => step.questionId);
-
-        // Delete downstream answers
-        if (downstreamQuestionIds.length > 0) {
-          await prisma.qandaAnswer.deleteMany({
+        if (currentStep) {
+          // Delete all nav steps with stepIndex > current stepIndex
+          const deletedSteps = await prisma.qandaNavStep.findMany({
             where: {
               submissionId,
-              questionId: {
-                in: downstreamQuestionIds,
+              stepIndex: {
+                gt: currentStep.stepIndex,
+              },
+            },
+          });
+
+          // Collect questionIds from deleted steps
+          const downstreamQuestionIds = deletedSteps.map((step) => step.questionId);
+
+          // Delete downstream answers
+          if (downstreamQuestionIds.length > 0) {
+            await prisma.qandaAnswer.deleteMany({
+              where: {
+                submissionId,
+                questionId: {
+                  in: downstreamQuestionIds,
+                },
+              },
+            });
+          }
+
+          // Delete the nav steps
+          await prisma.qandaNavStep.deleteMany({
+            where: {
+              submissionId,
+              stepIndex: {
+                gt: currentStep.stepIndex,
               },
             },
           });
         }
-
-        // Delete the nav steps
-        await prisma.qandaNavStep.deleteMany({
-          where: {
-            submissionId,
-            stepIndex: {
-              gt: currentStep.stepIndex,
-            },
-          },
-        });
       }
-    }
 
-    await prisma.qandaAnswer.upsert({
-      where: {
-        submissionId_questionId: {
-          submissionId,
-          questionId,
+      await prisma.qandaAnswer.upsert({
+        where: {
+          submissionId_questionId: {
+            submissionId,
+            questionId,
+          },
         },
-      },
-      create: answerData,
-      update: answerData,
-    });
+        create: answerData,
+        update: answerData,
+      });
+    }
 
     // Load all answers for this submission (including the one we just saved)
     // This is needed for template rendering of the next question
@@ -221,6 +229,11 @@ export async function POST(request: Request) {
           },
         },
       },
+    });
+
+    // Get total question count for progress calculation
+    const totalQuestions = await prisma.qandaQuestion.count({
+      where: { formId: submission.formId },
     });
 
     // Build value map for template rendering
@@ -252,13 +265,18 @@ export async function POST(request: Request) {
     });
 
     // Normalize answer value for rule evaluation
-    let answerValue: string;
-    if (question.type === "yesno") {
-      // For yesno, use valueText ("true"/"false") or convert boolean
-      answerValue = answerData.valueText || (answerData.valueJson ? "true" : "false");
-    } else {
-      // For other types, use valueText (string)
-      answerValue = answerData.valueText || "";
+    // For instruction questions, there's no answer value, so use empty string
+    let answerValue: string = "";
+    let answerValueJson: any = null;
+    
+    if (question.type !== "instruction") {
+      if (question.type === "yesno") {
+        const boolValue = value === "yes" || value === true;
+        answerValueJson = boolValue;
+        answerValue = boolValue ? "true" : "false";
+      } else {
+        answerValue = value || "";
+      }
     }
 
     // Evaluate rules in priority order (first match wins)
@@ -278,11 +296,11 @@ export async function POST(request: Request) {
           break;
         case "is_true":
           // For yesno questions, check if value is true
-          matches = answerValue === "true" || answerData.valueJson === true;
+          matches = answerValue === "true" || answerValueJson === true;
           break;
         case "is_false":
           // For yesno questions, check if value is false
-          matches = answerValue === "false" || answerData.valueJson === false;
+          matches = answerValue === "false" || answerValueJson === false;
           break;
       }
 
@@ -387,6 +405,7 @@ export async function POST(request: Request) {
                 })),
               },
               stepIndex: newStepIndex,
+              totalQuestions,
             });
           }
         }
@@ -449,6 +468,7 @@ export async function POST(request: Request) {
           })),
         },
         stepIndex: newStepIndex,
+        totalQuestions,
       });
     } else {
       // No more questions, complete the submission
