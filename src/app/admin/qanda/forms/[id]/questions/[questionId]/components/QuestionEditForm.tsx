@@ -121,10 +121,10 @@ export function QuestionEditForm({
           >
             Title <span style={{ color: "#dc2626" }}>*</span>
           </label>
-          <input
-            type="text"
+          <textarea
             id="title"
             name="title"
+            rows={2}
             defaultValue={question.title}
             required
             style={{
@@ -132,6 +132,7 @@ export function QuestionEditForm({
               border: "1px solid #ccc",
               borderRadius: "4px",
               fontSize: "1rem",
+              resize: "vertical",
             }}
           />
         </div>

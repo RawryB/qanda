@@ -325,13 +325,19 @@ export default function QandaRunnerPage() {
 
   if (state === "start") {
     return (
-      <div style={containerStyle}>
+      <div
+        style={{
+          ...containerStyle,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            minHeight: "100vh",
             padding: "2rem 1rem",
             maxWidth: "800px",
             margin: "0 auto",
@@ -395,13 +401,19 @@ export default function QandaRunnerPage() {
       : 0;
 
     return (
-      <div style={containerStyle}>
+      <div
+        style={{
+          ...containerStyle,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            minHeight: "100vh",
             padding: "2rem 1rem",
             maxWidth: "800px",
             margin: "0 auto",
@@ -439,10 +451,19 @@ export default function QandaRunnerPage() {
               />
             </div>
 
-            {/* Section Title */}
-            <h2 className="form-section-title">
-              {currentQuestion.renderedTitle ?? currentQuestion.title}
+            {/* Section Title (supports manual line breaks; "\n" or actual newlines) */}
+            {(() => {
+              const rawTitle = currentQuestion.renderedTitle ?? currentQuestion.title;
+              const displayTitle = rawTitle.replace(/\\n/g, "\n");
+              return (
+            <h2
+              className="form-section-title"
+              style={{ whiteSpace: "pre-line" }}
+            >
+              {displayTitle}
             </h2>
+              );
+            })()}
 
             {(currentQuestion.renderedHelpText ?? currentQuestion.helpText) && (
               <p className="text-secondary" style={{ fontSize: "1rem", margin: 0, marginTop: "-1rem" }}>
@@ -517,7 +538,14 @@ export default function QandaRunnerPage() {
 
   if (state === "completed") {
     return (
-      <div style={containerStyle}>
+      <div
+        style={{
+          ...containerStyle,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <div
           className="glass-card-prominent fade-in-up"
           style={{
@@ -525,7 +553,6 @@ export default function QandaRunnerPage() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            minHeight: "100vh",
             gap: "1rem",
             padding: "2rem",
             maxWidth: "500px",

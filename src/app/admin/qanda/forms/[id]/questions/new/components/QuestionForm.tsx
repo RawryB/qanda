@@ -123,16 +123,17 @@ export function QuestionForm({ action }: { action: (formData: FormData) => Promi
         >
           Title <span style={{ color: "#dc2626" }}>*</span>
         </label>
-        <input
-          type="text"
+        <textarea
           id="title"
           name="title"
+          rows={2}
           required
           style={{
             padding: "0.5rem",
             border: "1px solid #ccc",
             borderRadius: "4px",
             fontSize: "1rem",
+            resize: "vertical",
           }}
         />
       </div>
