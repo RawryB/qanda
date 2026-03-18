@@ -10,4 +10,19 @@ if (!process.env.QANDA_DATABASE_URL) {
 }
 
 execSync("prisma generate", { stdio: "inherit", env: process.env });
-execSync("next build", { stdio: "inherit", env: process.env });
+
+try {
+  execSync("next build", {
+    encoding: "utf8",
+    stdio: ["inherit", "pipe", "pipe"],
+    env: process.env,
+    maxBuffer: 20 * 1024 * 1024,
+  });
+} catch (err) {
+  const stdout = (err.stdout || "").trim();
+  const stderr = (err.stderr || "").trim();
+  if (stdout) console.error("\n--- next build stdout ---\n", stdout);
+  if (stderr) console.error("\n--- next build stderr ---\n", stderr);
+  console.error("\n--- next build failed (exit code " + (err.status ?? err.code) + ") ---");
+  process.exit(err.status ?? 1);
+}
