@@ -12,7 +12,7 @@ if (!process.env.QANDA_DATABASE_URL) {
 execSync("prisma generate", { stdio: "inherit", env: process.env });
 
 try {
-  execSync("next build", {
+  execSync("next build --webpack", {
     encoding: "utf8",
     stdio: ["inherit", "pipe", "pipe"],
     env: process.env,
