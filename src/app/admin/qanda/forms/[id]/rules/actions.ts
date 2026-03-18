@@ -36,8 +36,8 @@ export async function createRule(formId: string, formData: FormData) {
   }
 
   // Validate operator-specific requirements
-  if (operator === "is_true" || operator === "is_false") {
-    // compareValue should be ignored/empty for boolean operators
+  if (operator === "is_true" || operator === "is_false" || operator === "any") {
+    // compareValue not used for these operators
   } else {
     if (!compareValue || compareValue.trim() === "") {
       throw new Error("Compare value is required for this operator");
@@ -83,7 +83,7 @@ export async function createRule(formId: string, formData: FormData) {
       formId,
       sourceQuestionId,
       operator,
-      compareValue: operator === "is_true" || operator === "is_false" ? null : compareValue,
+      compareValue: ["is_true", "is_false", "any"].includes(operator) ? null : compareValue,
       destinationQuestionId: finalDestinationQuestionId,
       isEnd,
       priority,
@@ -105,8 +105,8 @@ export async function updateRule(ruleId: string, formId: string, formData: FormD
     throw new Error("Source question and operator are required");
   }
 
-  if (operator === "is_true" || operator === "is_false") {
-    // compareValue should be ignored/empty for boolean operators
+  if (operator === "is_true" || operator === "is_false" || operator === "any") {
+    // compareValue not used for these operators
   } else {
     if (!compareValue || compareValue.trim() === "") {
       throw new Error("Compare value is required for this operator");
@@ -137,7 +137,7 @@ export async function updateRule(ruleId: string, formId: string, formData: FormD
     data: {
       sourceQuestionId,
       operator,
-      compareValue: operator === "is_true" || operator === "is_false" ? null : compareValue,
+      compareValue: ["is_true", "is_false", "any"].includes(operator) ? null : compareValue,
       destinationQuestionId: finalDestinationQuestionId,
       isEnd,
     },

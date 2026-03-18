@@ -155,7 +155,7 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
               attempt,
               statusCode: null,
               success: false,
-              error: lastError.message || "Unknown error",
+              error: lastError ? lastError.message : "Unknown error",
             },
           });
         }

@@ -27,7 +27,8 @@ export function RuleForm({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const needsCompareValue = operator !== "is_true" && operator !== "is_false";
+  const needsCompareValue =
+    operator !== "is_true" && operator !== "is_false" && operator !== "any";
 
   async function handleSubmit(formData: FormData) {
     setIsSubmitting(true);
@@ -101,6 +102,7 @@ export function RuleForm({
           <option value="contains">contains</option>
           <option value="is_true">is true (yesno only)</option>
           <option value="is_false">is false (yesno only)</option>
+          <option value="any">any value (else)</option>
         </select>
       </div>
 

@@ -302,6 +302,10 @@ export async function POST(request: Request) {
           // For yesno questions, check if value is false
           matches = answerValue === "false" || answerValueJson === false;
           break;
+        case "any":
+          // Match any answer (use as last rule for "else" / return to main line)
+          matches = true;
+          break;
       }
 
       if (matches) {
