@@ -337,10 +337,8 @@ export async function POST(request: Request) {
             },
           });
 
-          // Fire webhook (best-effort, don't await to block response)
-          fireZapierOnCompletion(submissionId).catch((err) => {
-            console.error("Webhook error (non-blocking):", err);
-          });
+          // Fire webhook (best-effort). Await so serverless runtime doesn't terminate early.
+          await fireZapierOnCompletion(submissionId);
         }
 
         // Reload submission to get form with redirectUrl
@@ -491,10 +489,8 @@ export async function POST(request: Request) {
           },
         });
 
-        // Fire webhook (best-effort, don't await to block response)
-        fireZapierOnCompletion(submissionId).catch((err) => {
-          console.error("Webhook error (non-blocking):", err);
-        });
+        // Fire webhook (best-effort). Await so serverless runtime doesn't terminate early.
+        await fireZapierOnCompletion(submissionId);
       }
 
       // Reload submission to get form with redirectUrl

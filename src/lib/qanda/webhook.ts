@@ -90,7 +90,7 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
     // Retry logic: up to 3 attempts with backoff
     const maxAttempts = 3;
     const backoffDelays = [0, 500, 1500]; // ms
-    const timeoutMs = 8000; // 8 seconds
+    const timeoutMs = 20000; // 20 seconds (Zapier can be slow in production)
 
     let lastError: Error | null = null;
     let lastStatusCode: number | null = null;
@@ -141,7 +141,7 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
 
           // Handle abort (timeout)
           if (fetchError.name === "AbortError") {
-            lastError = new Error("Request timeout after 8 seconds");
+            lastError = new Error(`Request timeout after ${Math.round(timeoutMs / 1000)} seconds`);
           } else {
             lastError = fetchError;
           }
