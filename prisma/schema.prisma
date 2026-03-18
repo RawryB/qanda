@@ -3,9 +3,9 @@
 
 generator client {
   provider = "prisma-client-js"
-  // Include Vercel/AWS Lambda runtime binary so the query engine is present at runtime.
-  // "native" covers local dev; "rhel-openssl-3.0.x" matches the Vercel runtime in logs.
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  // Avoid shipping Rust engine binaries (fixes Vercel packaging issues).
+  // Requires a driver adapter at runtime (we use @prisma/adapter-pg + pg).
+  engineType = "client"
 }
 
 datasource db {
