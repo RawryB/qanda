@@ -25,6 +25,9 @@ export default function QandaRunnerPage() {
   const [state, setState] = useState<FormState>("loading");
   const [formName, setFormName] = useState("");
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
+  const [introText, setIntroText] = useState<string | null>(null);
+  const [completionTitle, setCompletionTitle] = useState<string | null>(null);
+  const [completionMessage, setCompletionMessage] = useState<string | null>(null);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [stepIndex, setStepIndex] = useState<number>(0);
@@ -32,6 +35,13 @@ export default function QandaRunnerPage() {
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const resolvedIntroText =
+    introText ||
+    "Thanks for you interest in coaching, answering these questions will give me the best insights into how I can best help you Swim Faster. Should only take a few minutes and I'll get back to you ASAP.";
+
+  const resolvedCompletionTitle = completionTitle || "Done";
+  const resolvedCompletionMessage = completionMessage || "Thank you for your submission!";
 
   useEffect(() => {
     // Fetch form name for start screen
@@ -41,6 +51,9 @@ export default function QandaRunnerPage() {
         if (response.ok) {
           const data = await response.json();
           setFormName(data.name);
+          setIntroText(data.introText ?? null);
+          setCompletionTitle(data.completionTitle ?? null);
+          setCompletionMessage(data.completionMessage ?? null);
         } else {
           setError("Form not found or not published");
         }
@@ -77,6 +90,15 @@ export default function QandaRunnerPage() {
       }
       if (data.form?.backgroundImageUrl) {
         setBackgroundImageUrl(data.form.backgroundImageUrl);
+      }
+      if (data.form?.introText !== undefined) {
+        setIntroText(data.form.introText ?? null);
+      }
+      if (data.form?.completionTitle !== undefined) {
+        setCompletionTitle(data.form.completionTitle ?? null);
+      }
+      if (data.form?.completionMessage !== undefined) {
+        setCompletionMessage(data.form.completionMessage ?? null);
       }
       if (data.totalQuestions) {
         setTotalQuestions(data.totalQuestions);
@@ -363,7 +385,7 @@ export default function QandaRunnerPage() {
               {formName || "SF Coaching"}
             </h1>
             <p className="hero-description">
-              Thanks for you interest in coaching, answering these questions will give me the best insights into how I can best help you Swim Faster. Should only take a few minutes and I'll get back to you ASAP.
+              {resolvedIntroText}
             </p>
           </div>
 
@@ -560,10 +582,10 @@ export default function QandaRunnerPage() {
           }}
         >
           <h1 className="gradient-text" style={{ fontSize: "2rem", fontWeight: "bold", margin: 0 }}>
-            Done
+            {resolvedCompletionTitle}
           </h1>
           <p className="text-secondary" style={{ fontSize: "1rem" }}>
-            Thank you for your submission!
+            {resolvedCompletionMessage}
           </p>
         </div>
       </div>

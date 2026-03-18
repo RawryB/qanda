@@ -205,6 +205,86 @@ export default function NewFormPage() {
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+          }}
+        >
+          <label
+            htmlFor="introText"
+            className="text-primary"
+            style={{
+              fontSize: "0.9rem",
+              fontWeight: "500",
+            }}
+          >
+            Intro Text (optional)
+          </label>
+          <textarea
+            id="introText"
+            name="introText"
+            className="glass-input"
+            rows={4}
+          />
+          <small className="text-muted" style={{ fontSize: "0.8rem" }}>
+            Shown on the first screen before the applicant starts the form.
+          </small>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+          }}
+        >
+          <label
+            htmlFor="completionTitle"
+            className="text-primary"
+            style={{
+              fontSize: "0.9rem",
+              fontWeight: "500",
+            }}
+          >
+            Completion Title (optional)
+          </label>
+          <input
+            type="text"
+            id="completionTitle"
+            name="completionTitle"
+            className="glass-input"
+            placeholder="Done"
+          />
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+          }}
+        >
+          <label
+            htmlFor="completionMessage"
+            className="text-primary"
+            style={{
+              fontSize: "0.9rem",
+              fontWeight: "500",
+            }}
+          >
+            Completion Message (optional)
+          </label>
+          <textarea
+            id="completionMessage"
+            name="completionMessage"
+            className="glass-input"
+            rows={3}
+            placeholder="Thank you for your submission!"
+          />
+        </div>
+
+        <div
+          style={{
+            display: "flex",
             gap: "1rem",
             marginTop: "1rem",
           }}

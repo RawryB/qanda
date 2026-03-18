@@ -85,6 +85,9 @@ export async function POST(request: Request) {
         name: form.name,
         slug: form.slug,
         backgroundImageUrl: form.backgroundImageUrl,
+        introText: form.introText,
+        completionTitle: form.completionTitle,
+        completionMessage: form.completionMessage,
       },
     });
   } catch (error: any) {

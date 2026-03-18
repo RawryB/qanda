@@ -303,6 +303,106 @@ export default async function EditFormPage({
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+          }}
+        >
+          <label
+            htmlFor="introText"
+            style={{
+              fontSize: "0.9rem",
+              fontWeight: "500",
+            }}
+          >
+            Intro Text (optional)
+          </label>
+          <textarea
+            id="introText"
+            name="introText"
+            defaultValue={form.introText || ""}
+            rows={4}
+            style={{
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              fontSize: "1rem",
+            }}
+          />
+          <small
+            style={{
+              fontSize: "0.8rem",
+              color: "#666",
+            }}
+          >
+            Shown on the first screen before the applicant starts the form.
+          </small>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+          }}
+        >
+          <label
+            htmlFor="completionTitle"
+            style={{
+              fontSize: "0.9rem",
+              fontWeight: "500",
+            }}
+          >
+            Completion Title (optional)
+          </label>
+          <input
+            type="text"
+            id="completionTitle"
+            name="completionTitle"
+            defaultValue={form.completionTitle || ""}
+            placeholder="Done"
+            style={{
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              fontSize: "1rem",
+            }}
+          />
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+          }}
+        >
+          <label
+            htmlFor="completionMessage"
+            style={{
+              fontSize: "0.9rem",
+              fontWeight: "500",
+            }}
+          >
+            Completion Message (optional)
+          </label>
+          <textarea
+            id="completionMessage"
+            name="completionMessage"
+            defaultValue={form.completionMessage || ""}
+            rows={3}
+            placeholder="Thank you for your submission!"
+            style={{
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              fontSize: "1rem",
+            }}
+          />
+        </div>
+
+        <div
+          style={{
+            display: "flex",
             gap: "1rem",
             marginTop: "1rem",
           }}

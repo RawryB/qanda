@@ -11,6 +11,9 @@ export async function createForm(formData: FormData) {
   const redirectUrl = formData.get("redirectUrl") as string | null;
   const zapierHookUrl = formData.get("zapierHookUrl") as string | null;
   const backgroundImageUrl = formData.get("backgroundImageUrl") as string | null;
+  const introText = formData.get("introText") as string | null;
+  const completionTitle = formData.get("completionTitle") as string | null;
+  const completionMessage = formData.get("completionMessage") as string | null;
 
   // Validate slug format
   if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -51,6 +54,9 @@ export async function createForm(formData: FormData) {
         redirectUrl: redirectUrl?.trim() || null,
         zapierHookUrl: zapierHookUrl?.trim() || null,
         backgroundImageUrl: backgroundImageUrl?.trim() || null,
+        introText: introText?.trim() || null,
+        completionTitle: completionTitle?.trim() || null,
+        completionMessage: completionMessage?.trim() || null,
       },
     });
 
@@ -71,6 +77,9 @@ export async function updateForm(id: string, formData: FormData) {
   const redirectUrl = formData.get("redirectUrl") as string | null;
   const zapierHookUrl = formData.get("zapierHookUrl") as string | null;
   const backgroundImageUrl = formData.get("backgroundImageUrl") as string | null;
+  const introText = formData.get("introText") as string | null;
+  const completionTitle = formData.get("completionTitle") as string | null;
+  const completionMessage = formData.get("completionMessage") as string | null;
 
   // Validate slug format
   if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -112,6 +121,9 @@ export async function updateForm(id: string, formData: FormData) {
         redirectUrl: redirectUrl?.trim() || null,
         zapierHookUrl: zapierHookUrl?.trim() || null,
         backgroundImageUrl: backgroundImageUrl?.trim() || null,
+        introText: introText?.trim() || null,
+        completionTitle: completionTitle?.trim() || null,
+        completionMessage: completionMessage?.trim() || null,
       },
     });
 

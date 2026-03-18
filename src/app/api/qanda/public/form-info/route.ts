@@ -18,6 +18,9 @@ export async function GET(request: Request) {
       select: {
         name: true,
         slug: true,
+        introText: true,
+        completionTitle: true,
+        completionMessage: true,
       },
     });
 
@@ -28,6 +31,9 @@ export async function GET(request: Request) {
     return NextResponse.json({
       name: form.name,
       slug: form.slug,
+      introText: form.introText,
+      completionTitle: form.completionTitle,
+      completionMessage: form.completionMessage,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Failed to fetch form" }, { status: 500 });
