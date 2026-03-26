@@ -83,6 +83,12 @@ export async function POST(request: Request) {
         introText: form.introText,
         completionTitle: form.completionTitle,
         completionMessage: form.completionMessage,
+        primaryColor: form.primaryColor,
+        accentColor: form.accentColor,
+        transitionColor: form.transitionColor,
+        primaryFont: form.primaryFont,
+        secondaryFont: form.secondaryFont,
+        logoUrl: form.logoUrl,
       },
     });
   } catch (error: any) {

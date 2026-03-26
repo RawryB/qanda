@@ -21,6 +21,12 @@ export async function GET(request: Request) {
         introText: true,
         completionTitle: true,
         completionMessage: true,
+        primaryColor: true,
+        accentColor: true,
+        transitionColor: true,
+        primaryFont: true,
+        secondaryFont: true,
+        logoUrl: true,
       },
     });
 
@@ -34,6 +40,12 @@ export async function GET(request: Request) {
       introText: form.introText,
       completionTitle: form.completionTitle,
       completionMessage: form.completionMessage,
+      primaryColor: form.primaryColor,
+      accentColor: form.accentColor,
+      transitionColor: form.transitionColor,
+      primaryFont: form.primaryFont,
+      secondaryFont: form.secondaryFont,
+      logoUrl: form.logoUrl,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Failed to fetch form" }, { status: 500 });

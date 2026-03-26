@@ -28,6 +28,23 @@ function isLightColor(hex: string) {
   return luminance > 0.6;
 }
 
+const GOOGLE_FONT_OPTIONS = new Set([
+  "Syne",
+  "DM Sans",
+  "Inter",
+  "Lora",
+  "Merriweather",
+  "Montserrat",
+  "Poppins",
+  "Manrope",
+  "Plus Jakarta Sans",
+  "Playfair Display",
+]);
+
+function sanitizeFont(font: string, fallback: string) {
+  return GOOGLE_FONT_OPTIONS.has(font) ? font : fallback;
+}
+
 export default function FormsRunnerPage() {
   const params = useParams();
   const slug = params.slug as string;
@@ -35,7 +52,12 @@ export default function FormsRunnerPage() {
   const [state, setState] = useState<FormState>("loading");
   const [formName, setFormName] = useState("");
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [primaryColor, setPrimaryColor] = useState<string>("#0D0D0D");
   const [accentColor, setAccentColor] = useState<string>("#4A4744");
+  const [transitionColor, setTransitionColor] = useState<string | null>(null);
+  const [primaryFont, setPrimaryFont] = useState<string>("Syne");
+  const [secondaryFont, setSecondaryFont] = useState<string>("DM Sans");
   const [introText, setIntroText] = useState<string | null>(null);
   const [completionTitle, setCompletionTitle] = useState<string | null>(null);
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
@@ -46,6 +68,9 @@ export default function FormsRunnerPage() {
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const resolvedPrimaryFont = sanitizeFont(primaryFont, "Syne");
+  const resolvedSecondaryFont = sanitizeFont(secondaryFont, "DM Sans");
 
   const resolvedIntroText =
     introText ||
@@ -68,7 +93,12 @@ export default function FormsRunnerPage() {
           setIntroText(data.introText ?? null);
           setCompletionTitle(data.completionTitle ?? null);
           setCompletionMessage(data.completionMessage ?? null);
+          if (typeof data.primaryColor === "string") setPrimaryColor(data.primaryColor);
           if (typeof data.accentColor === "string") setAccentColor(data.accentColor);
+          if (typeof data.transitionColor === "string") setTransitionColor(data.transitionColor);
+          if (typeof data.primaryFont === "string") setPrimaryFont(data.primaryFont);
+          if (typeof data.secondaryFont === "string") setSecondaryFont(data.secondaryFont);
+          if (typeof data.logoUrl === "string") setLogoUrl(data.logoUrl);
         } else {
           setError("Form not found or not published");
         }
@@ -79,6 +109,27 @@ export default function FormsRunnerPage() {
     };
     if (slug) fetchFormName();
   }, [slug]);
+
+  useEffect(() => {
+    const families = Array.from(
+      new Set([resolvedPrimaryFont, resolvedSecondaryFont]),
+    ).map((font) => `family=${encodeURIComponent(font).replace(/%20/g, "+")}:wght@400;500;700;800`);
+    const href = `https://fonts.googleapis.com/css2?${families.join("&")}&display=swap`;
+
+    const existing = document.getElementById("qanda-runner-google-fonts");
+    if (existing) existing.remove();
+
+    const link = document.createElement("link");
+    link.id = "qanda-runner-google-fonts";
+    link.rel = "stylesheet";
+    link.href = href;
+    document.head.appendChild(link);
+
+    return () => {
+      const current = document.getElementById("qanda-runner-google-fonts");
+      if (current) current.remove();
+    };
+  }, [resolvedPrimaryFont, resolvedSecondaryFont]);
 
   const handleStart = async () => {
     setIsSubmitting(true);
@@ -97,7 +148,12 @@ export default function FormsRunnerPage() {
       if (data.form?.introText !== undefined) setIntroText(data.form.introText ?? null);
       if (data.form?.completionTitle !== undefined) setCompletionTitle(data.form.completionTitle ?? null);
       if (data.form?.completionMessage !== undefined) setCompletionMessage(data.form.completionMessage ?? null);
+      if (typeof data.form?.primaryColor === "string") setPrimaryColor(data.form.primaryColor);
       if (typeof data.form?.accentColor === "string") setAccentColor(data.form.accentColor);
+      if (typeof data.form?.transitionColor === "string") setTransitionColor(data.form.transitionColor);
+      if (typeof data.form?.primaryFont === "string") setPrimaryFont(data.form.primaryFont);
+      if (typeof data.form?.secondaryFont === "string") setSecondaryFont(data.form.secondaryFont);
+      if (typeof data.form?.logoUrl === "string") setLogoUrl(data.form.logoUrl);
       if (data.totalQuestions) setTotalQuestions(data.totalQuestions);
       setCurrentQuestion(data.question);
       setStepIndex(data.stepIndex ?? 0);
@@ -215,7 +271,9 @@ export default function FormsRunnerPage() {
                 onChange={(e) => setAnswer(e.target.value)}
                 required={currentQuestion.required}
               />
-              <span className="type-body-md">{option.label}</span>
+              <span className="type-body-md" style={{ fontFamily: "var(--runner-font-secondary)" }}>
+                {option.label}
+              </span>
             </label>
           ))}
         </div>
@@ -240,11 +298,16 @@ export default function FormsRunnerPage() {
 
   const shellStyle: React.CSSProperties = {
     minHeight: "100vh",
+    background: transitionColor
+      ? `linear-gradient(135deg, ${primaryColor} 0%, ${transitionColor} 100%)`
+      : primaryColor,
     ...(backgroundImageUrl
       ? { backgroundImage: `url(${backgroundImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
       : {}),
     ["--accent" as any]: accentColor,
     ["--accent-contrast" as any]: accentContrast,
+    ["--runner-font-primary" as any]: `'${resolvedPrimaryFont}', var(--font-syne), sans-serif`,
+    ["--runner-font-secondary" as any]: `'${resolvedSecondaryFont}', var(--font-dm-sans), sans-serif`,
   };
 
   if (state === "loading") {
@@ -257,13 +320,34 @@ export default function FormsRunnerPage() {
 
   if (state === "start") {
     return (
-      <div style={shellStyle} className="flex min-h-screen items-center justify-center p-4">
-        <section className="ui-surface-panel ui-border ui-radius-lg flex w-full max-w-[760px] flex-col items-center gap-6 px-8 py-10 text-center">
-          <div className="type-heading-md">
-            Q<span style={{ color: "var(--accent)" }}>&amp;</span>A
-          </div>
-          <h1 className="type-display-md m-0">{formName || "Application"}</h1>
-          <p className="type-body-md ui-text-secondary m-0">{resolvedIntroText}</p>
+      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center p-4">
+        <div className="pointer-events-none absolute inset-0 bg-black/45" />
+        <section
+          className="relative ui-border ui-radius-lg flex w-full max-w-[760px] flex-col items-center gap-6 px-8 py-10 text-center"
+          style={{
+            background: "color-mix(in srgb, var(--bg-panel) 88%, black 12%)",
+            boxShadow:
+              "0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent), 0 20px 60px color-mix(in srgb, var(--accent) 14%, transparent), 0 18px 40px rgba(0,0,0,0.42)",
+          }}
+        >
+          <div
+            className="absolute left-0 top-0 h-[2px] w-full rounded-t-[inherit]"
+            style={{
+              background: transitionColor
+                ? `linear-gradient(90deg, var(--accent) 0%, ${transitionColor} 100%)`
+                : "var(--accent)",
+            }}
+          />
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="Form logo" className="h-[56px] w-auto object-contain" />
+          ) : (
+            <div className="type-heading-md" style={{ fontFamily: "var(--runner-font-primary)" }}>
+              Q<span style={{ color: "var(--accent)" }}>&amp;</span>A
+            </div>
+          )}
+          <h1 className="type-display-md m-0" style={{ fontFamily: "var(--runner-font-primary)" }}>{formName || "Application"}</h1>
+          <p className="type-body-md ui-text-secondary m-0" style={{ fontFamily: "var(--runner-font-secondary)" }}>{resolvedIntroText}</p>
           <Button variant="accent" onClick={handleStart} disabled={isSubmitting} className="min-w-[220px]">
             {isSubmitting ? "Starting..." : "Start"}
           </Button>
@@ -279,15 +363,35 @@ export default function FormsRunnerPage() {
     const displayTitle = rawTitle.replace(/\\n/g, "\n");
 
     return (
-      <div style={shellStyle} className="flex min-h-screen items-center justify-center p-4">
-        <section className="ui-surface-panel ui-border ui-radius-lg flex w-full max-w-[760px] flex-col gap-6 px-8 py-8">
+      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center p-4">
+        <div className="pointer-events-none absolute inset-0 bg-black/45" />
+        <section
+          className="relative ui-border ui-radius-lg flex w-full max-w-[760px] flex-col gap-6 px-8 py-8"
+          style={{
+            background: "color-mix(in srgb, var(--bg-panel) 88%, black 12%)",
+            boxShadow:
+              "0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent), 0 20px 60px color-mix(in srgb, var(--accent) 14%, transparent), 0 18px 40px rgba(0,0,0,0.42)",
+          }}
+        >
+          <div
+            className="absolute left-0 top-0 h-[2px] w-full rounded-t-[inherit]"
+            style={{
+              background: transitionColor
+                ? `linear-gradient(90deg, var(--accent) 0%, ${transitionColor} 100%)`
+                : "var(--accent)",
+            }}
+          />
           <div className="h-[6px] w-full overflow-hidden rounded-full bg-[var(--bg-field)]">
             <div className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-150" style={{ width: `${progressPercent}%` }} />
           </div>
 
-          <h2 className="type-heading-lg m-0 whitespace-pre-line">{displayTitle}</h2>
+          <h2 className="type-heading-lg m-0 whitespace-pre-line" style={{ fontFamily: "var(--runner-font-primary)" }}>
+            {displayTitle}
+          </h2>
           {(currentQuestion.renderedHelpText ?? currentQuestion.helpText) && (
-            <p className="type-body-md ui-text-secondary -mt-3 m-0">{currentQuestion.renderedHelpText ?? currentQuestion.helpText}</p>
+            <p className="type-body-md ui-text-secondary -mt-3 m-0" style={{ fontFamily: "var(--runner-font-secondary)" }}>
+              {currentQuestion.renderedHelpText ?? currentQuestion.helpText}
+            </p>
           )}
           {error && <p className="m-0 text-[var(--danger-fg)]">{error}</p>}
 
@@ -317,10 +421,28 @@ export default function FormsRunnerPage() {
 
   if (state === "completed") {
     return (
-      <div style={shellStyle} className="flex min-h-screen items-center justify-center p-4">
-        <section className="ui-surface-panel ui-border ui-radius-lg flex w-full max-w-[560px] flex-col items-center gap-4 px-8 py-10 text-center">
-          <h1 className="type-display-md m-0">{resolvedCompletionTitle}</h1>
-          <p className="type-body-md ui-text-secondary m-0">{resolvedCompletionMessage}</p>
+      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center p-4">
+        <div className="pointer-events-none absolute inset-0 bg-black/45" />
+        <section
+          className="relative ui-border ui-radius-lg flex w-full max-w-[560px] flex-col items-center gap-4 px-8 py-10 text-center"
+          style={{
+            background: "color-mix(in srgb, var(--bg-panel) 88%, black 12%)",
+            boxShadow:
+              "0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent), 0 20px 60px color-mix(in srgb, var(--accent) 14%, transparent), 0 18px 40px rgba(0,0,0,0.42)",
+          }}
+        >
+          <div
+            className="absolute left-0 top-0 h-[2px] w-full rounded-t-[inherit]"
+            style={{
+              background: transitionColor
+                ? `linear-gradient(90deg, var(--accent) 0%, ${transitionColor} 100%)`
+                : "var(--accent)",
+            }}
+          />
+          <h1 className="type-display-md m-0" style={{ fontFamily: "var(--runner-font-primary)" }}>{resolvedCompletionTitle}</h1>
+          <p className="type-body-md ui-text-secondary m-0" style={{ fontFamily: "var(--runner-font-secondary)" }}>
+            {resolvedCompletionMessage}
+          </p>
         </section>
       </div>
     );

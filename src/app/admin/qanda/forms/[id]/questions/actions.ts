@@ -174,6 +174,65 @@ export async function moveQuestion(
   revalidatePath(`/admin/qanda/forms/${formId}`);
 }
 
+export async function reorderQuestion(
+  formId: string,
+  questionId: string,
+  targetOrder: number
+) {
+  const question = await prisma.qandaQuestion.findUnique({
+    where: { id: questionId },
+    select: { id: true, formId: true, order: true },
+  });
+
+  if (!question || question.formId !== formId) {
+    throw new Error("Question not found");
+  }
+
+  const count = await prisma.qandaQuestion.count({ where: { formId } });
+  const boundedTarget = Math.max(0, Math.min(targetOrder, count - 1));
+
+  if (boundedTarget === question.order) {
+    return;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (boundedTarget > question.order) {
+      await tx.qandaQuestion.updateMany({
+        where: {
+          formId,
+          order: {
+            gt: question.order,
+            lte: boundedTarget,
+          },
+        },
+        data: {
+          order: { decrement: 1 },
+        },
+      });
+    } else {
+      await tx.qandaQuestion.updateMany({
+        where: {
+          formId,
+          order: {
+            gte: boundedTarget,
+            lt: question.order,
+          },
+        },
+        data: {
+          order: { increment: 1 },
+        },
+      });
+    }
+
+    await tx.qandaQuestion.update({
+      where: { id: questionId },
+      data: { order: boundedTarget },
+    });
+  });
+
+  revalidatePath(`/admin/qanda/forms/${formId}`);
+}
+
 export async function getQuestion(questionId: string) {
   return await prisma.qandaQuestion.findUnique({
     where: { id: questionId },
@@ -365,6 +424,74 @@ export async function moveChoice(
       data: { order: choice.order },
     }),
   ]);
+
+  revalidatePath(`/admin/qanda/forms/${question.formId}/questions/${questionId}`);
+}
+
+export async function reorderChoice(
+  questionId: string,
+  choiceId: string,
+  targetOrder: number
+) {
+  const choice = await prisma.qandaChoice.findUnique({
+    where: { id: choiceId },
+    select: { id: true, questionId: true, order: true },
+  });
+
+  if (!choice || choice.questionId !== questionId) {
+    throw new Error("Choice not found");
+  }
+
+  const count = await prisma.qandaChoice.count({ where: { questionId } });
+  const boundedTarget = Math.max(0, Math.min(targetOrder, count - 1));
+
+  if (boundedTarget === choice.order) {
+    return;
+  }
+
+  const question = await prisma.qandaQuestion.findUnique({
+    where: { id: questionId },
+    select: { formId: true },
+  });
+
+  if (!question) {
+    throw new Error("Question not found");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (boundedTarget > choice.order) {
+      await tx.qandaChoice.updateMany({
+        where: {
+          questionId,
+          order: {
+            gt: choice.order,
+            lte: boundedTarget,
+          },
+        },
+        data: {
+          order: { decrement: 1 },
+        },
+      });
+    } else {
+      await tx.qandaChoice.updateMany({
+        where: {
+          questionId,
+          order: {
+            gte: boundedTarget,
+            lt: choice.order,
+          },
+        },
+        data: {
+          order: { increment: 1 },
+        },
+      });
+    }
+
+    await tx.qandaChoice.update({
+      where: { id: choiceId },
+      data: { order: boundedTarget },
+    });
+  });
 
   revalidatePath(`/admin/qanda/forms/${question.formId}/questions/${questionId}`);
 }

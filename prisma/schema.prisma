@@ -18,6 +18,12 @@ model QandaForm {
   name              String
   slug              String            @unique
   status            String            @default("draft") // draft|published|archived
+  primaryColor      String            @default("#0D0D0D")
+  accentColor       String            @default("#4A4744")
+  transitionColor   String?
+  primaryFont       String            @default("Syne")
+  secondaryFont     String            @default("DM Sans")
+  logoUrl           String?
   redirectUrl       String?
   zapierHookUrl     String?
   backgroundImageUrl String?

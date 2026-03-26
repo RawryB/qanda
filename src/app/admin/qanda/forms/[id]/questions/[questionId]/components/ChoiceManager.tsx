@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Input } from "@/components/ui";
-import { createChoice, deleteChoice, moveChoice, updateChoice } from "../../actions";
+import { createChoice, deleteChoice, reorderChoice, updateChoice } from "../../actions";
 
 type Choice = { id: string; order: number; value: string; label: string };
 
@@ -12,6 +12,7 @@ export function ChoiceManager({ questionId, choices: initialChoices }: { questio
   const [choices, setChoices] = useState(initialChoices);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [draggingChoiceId, setDraggingChoiceId] = useState<string | null>(null);
   const [newValue, setNewValue] = useState("");
   const [newLabel, setNewLabel] = useState("");
 
@@ -56,12 +57,14 @@ export function ChoiceManager({ questionId, choices: initialChoices }: { questio
     }
   };
 
-  const handleMove = async (choiceId: string, direction: "up" | "down") => {
+  const handleDropOnChoice = async (targetChoice: Choice) => {
+    if (!draggingChoiceId || draggingChoiceId === targetChoice.id) return;
     try {
-      await moveChoice(questionId, choiceId, direction);
+      await reorderChoice(questionId, draggingChoiceId, targetChoice.order);
+      setDraggingChoiceId(null);
       router.refresh();
     } catch (error: any) {
-      alert(error.message || "Failed to move choice");
+      alert(error.message || "Failed to reorder choice");
     }
   };
 
@@ -102,7 +105,16 @@ export function ChoiceManager({ questionId, choices: initialChoices }: { questio
       ) : (
         <div className="flex flex-col gap-4">
           {choices.map((choice, index) => (
-            <Card key={choice.id} className="p-4">
+            <Card
+              key={choice.id}
+              className="p-4"
+              draggable={editingId !== choice.id}
+              onDragStart={() => {
+                if (editingId !== choice.id) setDraggingChoiceId(choice.id);
+              }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => handleDropOnChoice(choice)}
+            >
               {editingId === choice.id ? (
                 <EditChoiceForm choice={choice} onSave={(value, label) => handleUpdate(choice.id, value, label)} onCancel={() => setEditingId(null)} />
               ) : (
@@ -113,10 +125,9 @@ export function ChoiceManager({ questionId, choices: initialChoices }: { questio
                     <span className="type-body-sm ui-text-secondary">({choice.value})</span>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleMove(choice.id, "up")} disabled={index === 0}>↑</Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleMove(choice.id, "down")} disabled={index === choices.length - 1}>↓</Button>
-                    <Button variant="ghost" onClick={() => setEditingId(choice.id)}>Edit</Button>
-                    <Button onClick={() => handleDelete(choice.id)} className="bg-[var(--danger-fg)] text-[var(--bg-app)]">Delete</Button>
+                    <Button variant="ghost" size="sm" className="px-2" title="Drag to reorder">⠿</Button>
+                    <Button variant="ghost" size="sm" className="px-2" title="Edit choice" onClick={() => setEditingId(choice.id)}>✎</Button>
+                    <Button variant="ghost" size="sm" className="px-2 text-[var(--danger-fg)]" title="Delete choice" onClick={() => handleDelete(choice.id)}>🗑</Button>
                   </div>
                 </div>
               )}
