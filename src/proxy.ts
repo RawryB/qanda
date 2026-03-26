@@ -6,7 +6,6 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   // Applicant-facing runner routes (must be public)
-  "/qanda(.*)",
   "/forms(.*)",
   // Public Q&A API used by runner (must be public)
   "/api/forms/public(.*)",
