@@ -162,7 +162,35 @@ export async function getForm(id: string) {
 }
 
 export async function getForms() {
-  return await prisma.qandaForm.findMany({
+  const forms = await prisma.qandaForm.findMany({
     orderBy: { updatedAt: "desc" },
+    include: {
+      _count: {
+        select: {
+          questions: true,
+          submissions: true,
+        },
+      },
+      submissions: {
+        select: {
+          status: true,
+        },
+      },
+    },
+  });
+
+  return forms.map((form) => {
+    const completedCount = form.submissions.filter((s) => s.status === "completed").length;
+    const completionRate =
+      form._count.submissions > 0
+        ? Math.round((completedCount / form._count.submissions) * 100)
+        : null;
+
+    return {
+      ...form,
+      questionCount: form._count.questions,
+      responseCount: form._count.submissions,
+      completionRate,
+    };
   });
 }

@@ -1,291 +1,101 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Badge, Button, Card } from "@/components/ui";
 import { getForm } from "../../actions";
 import { getQuestions } from "../questions/actions";
-import { getRules, createRule, deleteRule, moveRule } from "./actions";
-import { RuleForm } from "./components/RuleForm";
+import { createRule, getRules } from "./actions";
 import { MoveRuleButton, DeleteRuleButton } from "./components/RuleActions";
+import { RuleForm } from "./components/RuleForm";
 
-export default async function RulesPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function RulesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const form = await getForm(id);
-
-  if (!form) {
-    notFound();
-  }
+  if (!form) notFound();
 
   const questions = await getQuestions(id);
   const rules = await getRules(id);
 
   async function handleCreateRule(formData: FormData) {
     "use server";
-    try {
-      await createRule(id, formData);
-    } catch (error: any) {
-      throw error;
-    }
+    await createRule(id, formData);
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "2rem",
-        maxWidth: "900px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          Branching Rules
-        </h1>
-        <Link
-          href={`/admin/qanda/forms/${id}`}
-          style={{
-            color: "#0066cc",
-            textDecoration: "underline",
-            fontSize: "0.9rem",
-          }}
-        >
-          Back to form
-        </Link>
+    <div className="flex max-w-[1000px] flex-col gap-8">
+      <div className="flex items-center justify-between">
+        <h1 className="type-display-md m-0">Branching rules</h1>
+        <Link href={`/admin/qanda/forms/${id}`} className="type-body-sm ui-text-secondary">Back to form</Link>
       </div>
 
-      <div
-        style={{
-          padding: "1rem",
-          backgroundColor: "#f0f8ff",
-          borderRadius: "4px",
-          fontSize: "0.9rem",
-          color: "#333",
-        }}
-      >
-        <strong>How it works:</strong> Rules are evaluated in priority order (lower number = evaluated first).
-        When a user answers a question, rules for that question are checked. The first matching rule determines
-        the next question or ends the form. If no rules match, the form continues to the next question in order.
-      </div>
+      <Card className="p-4">
+        <p className="type-body-sm ui-text-secondary m-0">
+          Rules are evaluated in priority order. First matching rule determines destination.
+        </p>
+      </Card>
 
-      {/* Add Rule Form */}
-      <div
-        style={{
-          border: "1px solid #e5e5e5",
-          borderRadius: "4px",
-          padding: "1.5rem",
-        }}
-      >
-        <h2
-          style={{
-            fontSize: "1.25rem",
-            fontWeight: "bold",
-            margin: "0 0 1rem 0",
-          }}
-        >
-          Add Rule
-        </h2>
+      <Card className="p-6">
+        <h2 className="type-heading-lg mb-4 mt-0">Add rule</h2>
         <RuleForm formId={id} questions={questions} action={handleCreateRule} />
-      </div>
+      </Card>
 
-      {/* Existing Rules */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "2rem",
-        }}
-      >
-        <h2
-          style={{
-            fontSize: "1.5rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          Existing Rules
-        </h2>
-
+      <section className="flex flex-col gap-4">
+        <h2 className="type-heading-lg m-0">Existing rules</h2>
         {rules.length === 0 ? (
-          <p
-            style={{
-              color: "#333",
-              fontSize: "1rem",
-            }}
-          >
-            No rules defined yet. Add a rule above to enable branching logic.
-          </p>
+          <p className="type-body-md ui-text-secondary">No rules defined yet.</p>
         ) : (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "1.5rem",
-            }}
-          >
+          <div className="flex flex-col gap-4">
             {rules.map((rule) => {
               const destinationQuestion = rule.destinationQuestionId
                 ? questions.find((q) => q.id === rule.destinationQuestionId)
                 : null;
-
-              // Get all rules for this source question to determine move button states
-              const sourceRules = rules.filter(
-                (r) => r.sourceQuestionId === rule.sourceQuestionId
-              );
-              const sourceRulesSorted = sourceRules.sort((a, b) => a.priority - b.priority);
+              const sourceRulesSorted = rules
+                .filter((r) => r.sourceQuestionId === rule.sourceQuestionId)
+                .sort((a, b) => a.priority - b.priority);
               const currentIndex = sourceRulesSorted.findIndex((r) => r.id === rule.id);
               const canMoveUp = currentIndex > 0;
               const canMoveDown = currentIndex < sourceRulesSorted.length - 1;
 
               return (
-                <div
-                  key={rule.id}
-                  style={{
-                    border: "1px solid #e5e5e5",
-                    borderRadius: "4px",
-                    padding: "1rem",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.75rem",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.5rem",
-                        flex: 1,
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "1rem",
-                          alignItems: "center",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "1rem",
-                            fontWeight: "500",
-                          }}
-                        >
-                          When answering: <strong>{rule.sourceQuestion.title}</strong> ({rule.sourceQuestion.key})
-                        </span>
-                        <span
-                          style={{
-                            padding: "0.25rem 0.5rem",
-                            backgroundColor: "#e5e5e5",
-                            borderRadius: "4px",
-                            fontSize: "0.75rem",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          Priority: {rule.priority}
-                        </span>
+                <Card key={rule.id} className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-1 flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="type-body-md">When <strong>{rule.sourceQuestion.title}</strong> ({rule.sourceQuestion.key})</span>
+                        <Badge>Priority {rule.priority}</Badge>
                       </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "1rem",
-                          alignItems: "center",
-                          fontSize: "0.9rem",
-                          color: "#333",
-                        }}
-                      >
-                        <span>
-                          <strong>Operator:</strong> {rule.operator}
-                        </span>
-                        {rule.compareValue && (
-                          <span>
-                            <strong>Compare:</strong> {rule.compareValue}
-                          </span>
-                        )}
+                      <div className="type-body-sm ui-text-secondary">
+                        Operator: <strong>{rule.operator}</strong>{rule.compareValue ? ` | Compare: ${rule.compareValue}` : ""}
                       </div>
-                      <div
-                        style={{
-                          fontSize: "0.9rem",
-                          color: "#333",
-                        }}
-                      >
-                        <strong>Then:</strong>{" "}
+                      <div className="type-body-sm">
+                        Then:{" "}
                         {rule.isEnd ? (
-                          <span style={{ color: "#c33", fontWeight: "500" }}>End form</span>
+                          <span className="text-[var(--danger-fg)]">End form</span>
                         ) : destinationQuestion ? (
-                          <span>
-                            Go to <strong>{destinationQuestion.title}</strong> ({destinationQuestion.key})
-                          </span>
+                          <span>Go to <strong>{destinationQuestion.title}</strong> ({destinationQuestion.key})</span>
                         ) : (
-                          <span style={{ color: "#c33" }}>Invalid destination (question deleted)</span>
+                          <span className="text-[var(--danger-fg)]">Invalid destination</span>
                         )}
                       </div>
                     </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      <MoveRuleButton
-                        formId={id}
-                        ruleId={rule.id}
-                        direction="up"
-                        disabled={!canMoveUp}
-                      />
-                      <MoveRuleButton
-                        formId={id}
-                        ruleId={rule.id}
-                        direction="down"
-                        disabled={!canMoveDown}
-                      />
-                      <Link
-                        href={`/admin/qanda/forms/${id}/rules/${rule.id}/edit`}
-                        style={{
-                          padding: "0.5rem 1rem",
-                          border: "1px solid #ccc",
-                          borderRadius: "4px",
-                          textDecoration: "none",
-                          color: "#000",
-                          backgroundColor: "#fff",
-                          fontSize: "0.9rem",
-                        }}
-                      >
-                        Edit
+                    <div className="flex gap-2">
+                      <MoveRuleButton formId={id} ruleId={rule.id} direction="up" disabled={!canMoveUp} />
+                      <MoveRuleButton formId={id} ruleId={rule.id} direction="down" disabled={!canMoveDown} />
+                      <Link href={`/admin/qanda/forms/${id}/rules/${rule.id}/edit`} className="no-underline">
+                        <Button variant="ghost">Edit</Button>
                       </Link>
                       <DeleteRuleButton
                         ruleId={rule.id}
                         formId={id}
-                        ruleDescription={`${rule.sourceQuestion.title} → ${rule.isEnd ? "End" : destinationQuestion?.title || "Invalid"}`}
+                        ruleDescription={`${rule.sourceQuestion.title} -> ${rule.isEnd ? "End" : destinationQuestion?.title || "Invalid"}`}
                       />
                     </div>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

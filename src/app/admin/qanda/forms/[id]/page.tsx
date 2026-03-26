@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Badge, Button, Card, Input, Select } from "@/components/ui";
 import { getForm, updateForm } from "../actions";
 import { getQuestions } from "./questions/actions";
-import { MoveQuestionButton, DeleteQuestionButton } from "./questions/components/QuestionActions";
+import { DeleteQuestionButton, MoveQuestionButton } from "./questions/components/QuestionActions";
 
 export default async function EditFormPage({
   params,
@@ -28,561 +29,162 @@ export default async function EditFormPage({
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "2rem",
-        maxWidth: "600px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          Edit Form
-        </h1>
-        <div
-          style={{
-            display: "flex",
-            gap: "1rem",
-            alignItems: "center",
-          }}
-        >
-          <Link
-            href={`/admin/qanda/forms/${id}/rules`}
-            style={{
-              padding: "0.5rem 1rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              textDecoration: "none",
-              color: "#000",
-              fontSize: "0.9rem",
-            }}
-          >
-            Branching Rules
+    <div className="flex max-w-[900px] flex-col gap-8">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="type-display-md m-0">Edit form</h1>
+        <div className="flex items-center gap-2">
+          <Link href={`/admin/qanda/forms/${id}/rules`} className="no-underline">
+            <Button variant="ghost">Branching rules</Button>
           </Link>
-          <Link
-            href={`/admin/qanda/submissions?formId=${id}`}
-            style={{
-              padding: "0.5rem 1rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              textDecoration: "none",
-              color: "#000",
-              fontSize: "0.9rem",
-            }}
-          >
-            View submissions
+          <Link href={`/admin/qanda/submissions?formId=${id}`} className="no-underline">
+            <Button variant="ghost">View submissions</Button>
           </Link>
-          <Link
-            href="/admin/qanda/forms"
-            style={{
-              color: "#0066cc",
-              textDecoration: "underline",
-              fontSize: "0.9rem",
-            }}
-          >
+          <Link href="/admin/qanda/forms" className="type-body-sm ui-text-secondary">
             Back to forms
           </Link>
         </div>
       </div>
 
-      <form
-        action={handleUpdate}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1.5rem",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="name"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Name <span style={{ color: "#dc2626" }}>*</span>
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            defaultValue={form.name}
-            required
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-        </div>
+      <Card className="p-6">
+        <form action={handleUpdate} className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="name" className="type-body-sm ui-text-primary">
+              Name <span className="text-[var(--danger-fg)]">*</span>
+            </label>
+            <Input type="text" id="name" name="name" defaultValue={form.name} required />
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="slug"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Slug <span style={{ color: "#dc2626" }}>*</span>
-          </label>
-          <input
-            type="text"
-            id="slug"
-            name="slug"
-            defaultValue={form.slug}
-            required
-            pattern="[a-z0-9-]+"
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-          <small
-            style={{
-              fontSize: "0.8rem",
-              color: "#666",
-            }}
-          >
-            Lowercase letters, numbers, and hyphens only. No spaces.
-          </small>
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="slug" className="type-body-sm ui-text-primary">
+              Slug <span className="text-[var(--danger-fg)]">*</span>
+            </label>
+            <Input type="text" id="slug" name="slug" defaultValue={form.slug} required pattern="[a-z0-9-]+" />
+            <small className="type-meta-sm ui-text-muted">
+              Lowercase letters, numbers, and hyphens only. No spaces.
+            </small>
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="status"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Status
-          </label>
-          <select
-            id="status"
-            name="status"
-            defaultValue={form.status}
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="status" className="type-body-sm ui-text-primary">
+              Status
+            </label>
+            <Select id="status" name="status" defaultValue={form.status}>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </Select>
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="redirectUrl"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Redirect URL (optional)
-          </label>
-          <input
-            type="url"
-            id="redirectUrl"
-            name="redirectUrl"
-            defaultValue={form.redirectUrl || ""}
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="redirectUrl" className="type-body-sm ui-text-primary">
+              Redirect URL (optional)
+            </label>
+            <Input type="url" id="redirectUrl" name="redirectUrl" defaultValue={form.redirectUrl || ""} />
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="zapierHookUrl"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Zapier Hook URL (optional)
-          </label>
-          <input
-            type="url"
-            id="zapierHookUrl"
-            name="zapierHookUrl"
-            defaultValue={form.zapierHookUrl || ""}
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="zapierHookUrl" className="type-body-sm ui-text-primary">
+              Zapier Hook URL (optional)
+            </label>
+            <Input type="url" id="zapierHookUrl" name="zapierHookUrl" defaultValue={form.zapierHookUrl || ""} />
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="backgroundImageUrl"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Background Image URL (optional)
-          </label>
-          <input
-            type="url"
-            id="backgroundImageUrl"
-            name="backgroundImageUrl"
-            defaultValue={form.backgroundImageUrl || ""}
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="backgroundImageUrl" className="type-body-sm ui-text-primary">
+              Background Image URL (optional)
+            </label>
+            <Input
+              type="url"
+              id="backgroundImageUrl"
+              name="backgroundImageUrl"
+              defaultValue={form.backgroundImageUrl || ""}
+            />
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="introText"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Intro Text (optional)
-          </label>
-          <textarea
-            id="introText"
-            name="introText"
-            defaultValue={form.introText || ""}
-            rows={4}
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-          <small
-            style={{
-              fontSize: "0.8rem",
-              color: "#666",
-            }}
-          >
-            Shown on the first screen before the applicant starts the form.
-          </small>
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="introText" className="type-body-sm ui-text-primary">
+              Intro Text (optional)
+            </label>
+            <textarea
+              id="introText"
+              name="introText"
+              defaultValue={form.introText || ""}
+              rows={4}
+              className="ui-input min-h-[96px]"
+            />
+            <small className="type-meta-sm ui-text-muted">
+              Shown on the first screen before the applicant starts the form.
+            </small>
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="completionTitle"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Completion Title (optional)
-          </label>
-          <input
-            type="text"
-            id="completionTitle"
-            name="completionTitle"
-            defaultValue={form.completionTitle || ""}
-            placeholder="Done"
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="completionTitle" className="type-body-sm ui-text-primary">
+              Completion Title (optional)
+            </label>
+            <Input
+              type="text"
+              id="completionTitle"
+              name="completionTitle"
+              defaultValue={form.completionTitle || ""}
+              placeholder="Done"
+            />
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="completionMessage"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Completion Message (optional)
-          </label>
-          <textarea
-            id="completionMessage"
-            name="completionMessage"
-            defaultValue={form.completionMessage || ""}
-            rows={3}
-            placeholder="Thank you for your submission!"
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="completionMessage" className="type-body-sm ui-text-primary">
+              Completion Message (optional)
+            </label>
+            <textarea
+              id="completionMessage"
+              name="completionMessage"
+              defaultValue={form.completionMessage || ""}
+              rows={3}
+              placeholder="Thank you for your submission!"
+              className="ui-input min-h-[84px]"
+            />
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "1rem",
-            marginTop: "1rem",
-          }}
-        >
-          <button
-            type="submit"
-            style={{
-              padding: "0.75rem 1.5rem",
-              backgroundColor: "#0066cc",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "1rem",
-              fontWeight: "500",
-              cursor: "pointer",
-            }}
-          >
-            Save Changes
-          </button>
-          <Link
-            href="/admin/qanda/forms"
-            style={{
-              padding: "0.75rem 1.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              textDecoration: "none",
-              color: "#000",
-              fontSize: "1rem",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            Cancel
-          </Link>
-        </div>
-      </form>
+          <div className="mt-2 flex gap-3">
+            <Button type="submit">Save changes</Button>
+            <Link href="/admin/qanda/forms" className="no-underline">
+              <Button variant="ghost">Cancel</Button>
+            </Link>
+          </div>
+        </form>
+      </Card>
 
-      {/* Questions Section */}
-      <div
-        style={{
-          marginTop: "3rem",
-          paddingTop: "2rem",
-          borderTop: "1px solid #e5e5e5",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "1.5rem",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: "bold",
-              margin: 0,
-            }}
-          >
-            Questions
-          </h2>
-          <Link
-            href={`/admin/qanda/forms/${id}/questions/new`}
-            style={{
-              padding: "0.5rem 1rem",
-              backgroundColor: "#0066cc",
-              color: "#fff",
-              textDecoration: "none",
-              borderRadius: "4px",
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Add Question
+      <section className="mt-2 border-t border-[var(--border-subtle)] pt-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="type-heading-lg m-0">Questions</h2>
+          <Link href={`/admin/qanda/forms/${id}/questions/new`} className="no-underline">
+            <Button>Add question</Button>
           </Link>
         </div>
 
         {questions.length === 0 ? (
-          <p
-            style={{
-              color: "#333",
-              fontSize: "1rem",
-            }}
-          >
-            No questions yet. Add your first question to get started.
-          </p>
+          <p className="type-body-md ui-text-secondary">No questions yet. Add your first question to get started.</p>
         ) : (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "1rem",
-            }}
-          >
+          <div className="flex flex-col gap-4">
             {questions.map((question) => (
-              <div
-                key={question.id}
-                style={{
-                  border: "1px solid #e5e5e5",
-                  borderRadius: "4px",
-                  padding: "1rem",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.75rem",
-                }}
-              >
-                {/* Top Row: Question Text */}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "0.5rem",
-                    alignItems: "center",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "0.9rem",
-                      color: "#333",
-                      fontWeight: "500",
-                    }}
-                  >
-                      #{question.order + 1}
-                    </span>
+              <Card key={question.id} className="flex flex-col gap-3 p-4">
+                <div className="flex items-center gap-2">
+                  <span className="type-meta-sm ui-text-secondary">#{question.order + 1}</span>
                   <Link
                     href={`/admin/qanda/forms/${id}/questions/${question.id}`}
-                    style={{
-                      fontSize: "1.1rem",
-                      fontWeight: "500",
-                      color: "#fff",
-                      textDecoration: "none",
-                      flex: 1,
-                    }}
+                    className="type-heading-md ui-text-primary flex-1 no-underline hover:underline"
                   >
                     {question.title}
                   </Link>
                 </div>
-                
-                {/* Bottom Row: Type Badge / Required Badge / Action Buttons */}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "0.5rem",
-                    alignItems: "center",
-                  }}
-                >
-                  <span
-                    style={{
-                      padding: "0.25rem 0.5rem",
-                      backgroundColor: "#e5e5e5",
-                      borderRadius: "4px",
-                      fontSize: "0.75rem",
-                      textTransform: "uppercase",
-                      color: "#000",
-                      fontWeight: "500",
-                    }}
-                  >
-                    {question.type}
-                  </span>
+
+                <div className="flex items-center gap-2">
+                  <Badge>{question.type}</Badge>
                   {question.required && (
-                    <span
-                      style={{
-                        padding: "0.25rem 0.5rem",
-                        backgroundColor: "#fee",
-                        borderRadius: "4px",
-                        fontSize: "0.75rem",
-                        color: "#c33",
-                        fontWeight: "500",
-                      }}
-                    >
+                    <span className="inline-flex items-center rounded-[999px] bg-[var(--danger-bg)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--danger-fg)]">
                       Required
                     </span>
                   )}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "0.5rem",
-                      marginLeft: "auto",
-                    }}
-                  >
+                  <div className="ml-auto flex gap-2">
                     <MoveQuestionButton
                       formId={id}
                       questionId={question.id}
@@ -595,28 +197,17 @@ export default async function EditFormPage({
                       direction="down"
                       disabled={question.order === questions.length - 1}
                     />
-                    <Link
-                      href={`/admin/qanda/forms/${id}/questions/${question.id}`}
-                      style={{
-                        padding: "0.5rem 1rem",
-                        border: "1px solid #ccc",
-                        borderRadius: "4px",
-                        textDecoration: "none",
-                        color: "#000",
-                        backgroundColor: "#fff",
-                        fontSize: "0.9rem",
-                      }}
-                    >
-                      Edit
+                    <Link href={`/admin/qanda/forms/${id}/questions/${question.id}`} className="no-underline">
+                      <Button variant="ghost">Edit</Button>
                     </Link>
                     <DeleteQuestionButton questionId={question.id} questionTitle={question.title} />
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

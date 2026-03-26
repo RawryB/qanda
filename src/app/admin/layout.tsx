@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { UserButtonWrapper } from "./components/UserButtonWrapper";
+import { cn } from "@/components/ui/cn";
 
 export default async function AdminLayout({
   children,
@@ -14,79 +15,36 @@ export default async function AdminLayout({
     redirect("/sign-in");
   }
 
+  const navItemClass =
+    "block rounded-[6px] px-3 py-2 no-underline transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]";
+
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-      }}
-    >
-      {/* Left Sidebar Navigation */}
-      <aside
-        className="glass-card-subtle"
-        style={{
-          width: "240px",
-          minHeight: "100vh",
-          padding: "2rem 1rem",
-          marginRight: "1rem",
-        }}
-      >
-        <nav
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
+    <div className="flex min-h-screen">
+      <aside className="ui-surface-nav w-[196px] border-r border-[var(--border-subtle)] p-4">
+        <div className="mb-4 border-b border-[var(--border-subtle)] pb-4">
+          <Link href="/" className="type-heading-md ui-text-primary no-underline">
+            Q<span className="ui-text-muted">&amp;</span>A
+          </Link>
+        </div>
+        <div className="mb-2 type-label-sm uppercase tracking-[0.12em] ui-text-tertiary">Workspace</div>
+        <nav className="flex flex-col gap-1">
           <Link
             href="/"
-            className="text-primary"
-            style={{
-              padding: "0.75rem 1rem",
-              textDecoration: "none",
-              fontSize: "0.9rem",
-              fontWeight: "400",
-              borderRadius: "8px",
-              transition: "all 250ms ease",
-              display: "block",
-            }}
+            className={cn(navItemClass, "type-body-sm ui-text-secondary hover:bg-[var(--bg-field)] hover:ui-text-primary")}
           >
-            Q&A
+            Home
           </Link>
           <Link
             href="/admin/qanda"
-            className="text-primary"
-            style={{
-              padding: "0.75rem 1rem",
-              textDecoration: "none",
-              fontSize: "1rem",
-              fontWeight: "500",
-              borderRadius: "8px",
-              transition: "all 250ms ease",
-              display: "block",
-            }}
+            className={cn(navItemClass, "type-body-sm bg-[var(--bg-field)] ui-text-primary")}
           >
-            Qanda
+            QandA
           </Link>
         </nav>
       </aside>
 
-      {/* Main Content Area */}
-      <main
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          padding: "2rem",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginBottom: "2rem",
-          }}
-        >
+      <main className="flex flex-1 flex-col p-8">
+        <div className="mb-8 flex justify-end">
           <UserButtonWrapper />
         </div>
         {children}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { deleteForm } from "../actions";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui";
 
 export function DeleteFormButton({
   formId,
@@ -34,72 +35,41 @@ export function DeleteFormButton({
 
   if (showConfirm) {
     return (
-      <div
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-          alignItems: "center",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "0.9rem",
-            color: "#666",
-          }}
-        >
-          Delete "{formName}"?
-        </span>
-        <button
+      <div className="flex items-center gap-1">
+        <Button
           onClick={handleDelete}
           disabled={isDeleting}
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#dc2626",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "0.9rem",
-            cursor: isDeleting ? "not-allowed" : "pointer",
-            opacity: isDeleting ? 0.6 : 1,
-          }}
+          size="sm"
+          className="bg-[var(--danger-fg)] px-2 text-[var(--bg-app)]"
+          title={`Confirm delete ${formName}`}
         >
-          {isDeleting ? "Deleting..." : "Confirm"}
-        </button>
-        <button
+          {isDeleting ? "…" : "✓"}
+        </Button>
+        <Button
           onClick={() => {
             setShowConfirm(false);
             setIsDeleting(false);
           }}
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#f0f0f0",
-            color: "#000",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            fontSize: "0.9rem",
-            cursor: "pointer",
-          }}
+          variant="ghost"
+          size="sm"
+          className="px-2"
+          title="Cancel delete"
         >
-          Cancel
-        </button>
+          ✕
+        </Button>
       </div>
     );
   }
 
   return (
-    <button
+    <Button
       onClick={handleDelete}
-      style={{
-        padding: "0.5rem 1rem",
-        backgroundColor: "#dc2626",
-        color: "#fff",
-        border: "none",
-        borderRadius: "4px",
-        fontSize: "0.9rem",
-        cursor: "pointer",
-      }}
+      variant="ghost"
+      size="sm"
+      className="px-2 text-[var(--danger-fg)]"
+      title={`Delete ${formName}`}
     >
-      Delete
-    </button>
+      🗑
+    </Button>
   );
 }

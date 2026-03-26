@@ -15,8 +15,7 @@ export default async function NewQuestionPage({
     try {
       const questionId = await createQuestion(id, formData);
       const type = formData.get("type") as string;
-      
-      // For multi/dropdown, redirect to edit page to add choices
+
       if (type === "multi" || type === "dropdown") {
         redirect(`/admin/qanda/forms/${id}/questions/${questionId}`);
       } else {
@@ -28,38 +27,10 @@ export default async function NewQuestionPage({
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "2rem",
-        maxWidth: "600px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          New Question
-        </h1>
-        <Link
-          href={`/admin/qanda/forms/${id}`}
-          style={{
-            color: "#0066cc",
-            textDecoration: "underline",
-            fontSize: "0.9rem",
-          }}
-        >
+    <div className="flex max-w-[700px] flex-col gap-8">
+      <div className="flex items-center justify-between">
+        <h1 className="type-display-md m-0">New question</h1>
+        <Link href={`/admin/qanda/forms/${id}`} className="type-body-sm ui-text-secondary">
           Back to form
         </Link>
       </div>

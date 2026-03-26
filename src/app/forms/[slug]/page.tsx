@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import Image from "next/image";
+import { Button, Input, Select } from "@/components/ui";
 
 type Question = {
   id: string;
@@ -18,6 +18,16 @@ type Question = {
 
 type FormState = "loading" | "start" | "question" | "completed";
 
+function isLightColor(hex: string) {
+  const clean = hex.replace("#", "");
+  if (!/^[0-9A-Fa-f]{6}$/.test(clean)) return false;
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luminance > 0.6;
+}
+
 export default function FormsRunnerPage() {
   const params = useParams();
   const slug = params.slug as string;
@@ -25,23 +35,28 @@ export default function FormsRunnerPage() {
   const [state, setState] = useState<FormState>("loading");
   const [formName, setFormName] = useState("");
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
+  const [accentColor, setAccentColor] = useState<string>("#4A4744");
   const [introText, setIntroText] = useState<string | null>(null);
   const [completionTitle, setCompletionTitle] = useState<string | null>(null);
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-  const [stepIndex, setStepIndex] = useState<number>(0);
-  const [totalQuestions, setTotalQuestions] = useState<number>(0);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resolvedIntroText =
     introText ||
-    "Thanks for you interest in coaching, answering these questions will give me the best insights into how I can best help you Swim Faster. Should only take a few minutes and I'll get back to you ASAP.";
-
+    "Thanks for your interest. Answering these questions helps us understand your needs and follow up quickly.";
   const resolvedCompletionTitle = completionTitle || "Done";
   const resolvedCompletionMessage = completionMessage || "Thank you for your submission!";
+
+  const accentContrast = useMemo(
+    () => (isLightColor(accentColor) ? "#0D0D0D" : "#F5F2ED"),
+    [accentColor],
+  );
 
   useEffect(() => {
     const fetchFormName = async () => {
@@ -53,6 +68,7 @@ export default function FormsRunnerPage() {
           setIntroText(data.introText ?? null);
           setCompletionTitle(data.completionTitle ?? null);
           setCompletionMessage(data.completionMessage ?? null);
+          if (typeof data.accentColor === "string") setAccentColor(data.accentColor);
         } else {
           setError("Form not found or not published");
         }
@@ -81,6 +97,7 @@ export default function FormsRunnerPage() {
       if (data.form?.introText !== undefined) setIntroText(data.form.introText ?? null);
       if (data.form?.completionTitle !== undefined) setCompletionTitle(data.form.completionTitle ?? null);
       if (data.form?.completionMessage !== undefined) setCompletionMessage(data.form.completionMessage ?? null);
+      if (typeof data.form?.accentColor === "string") setAccentColor(data.form.accentColor);
       if (data.totalQuestions) setTotalQuestions(data.totalQuestions);
       setCurrentQuestion(data.question);
       setStepIndex(data.stepIndex ?? 0);
@@ -141,13 +158,13 @@ export default function FormsRunnerPage() {
       setStepIndex(data.stepIndex);
       if (data.totalQuestions) setTotalQuestions(data.totalQuestions);
       if (data.existingAnswer) {
+        const v = data.existingAnswer.valueText || data.existingAnswer.valueJson || "";
         if (data.question.type === "yesno") {
-          const answerValue = data.existingAnswer.valueText || data.existingAnswer.valueJson;
-          if (answerValue === true || answerValue === "true") setAnswer("yes");
-          else if (answerValue === false || answerValue === "false") setAnswer("no");
-          else setAnswer(answerValue || "");
+          if (v === true || v === "true") setAnswer("yes");
+          else if (v === false || v === "false") setAnswer("no");
+          else setAnswer(v);
         } else {
-          setAnswer(data.existingAnswer.valueText || data.existingAnswer.valueJson || "");
+          setAnswer(v);
         }
       } else {
         setAnswer("");
@@ -161,203 +178,153 @@ export default function FormsRunnerPage() {
 
   const renderInput = () => {
     if (!currentQuestion) return null;
-    switch (currentQuestion.type) {
-      case "instruction":
-        return null;
-      case "text":
-      case "email":
-      case "phone":
-        return (
-          <input
-            type={currentQuestion.type === "email" ? "email" : currentQuestion.type === "phone" ? "tel" : "text"}
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            required={currentQuestion.required}
-            className="glass-input"
-          />
-        );
-      case "yesno":
-        return (
-          <div className="glass-radio-group">
-            <label className={`glass-radio-option ${answer === "yes" ? "selected" : ""}`}>
-              <input
-                type="radio"
-                name="yesno"
-                value="yes"
-                checked={answer === "yes"}
-                onChange={(e) => setAnswer(e.target.value)}
-                required={currentQuestion.required}
-                style={{ marginRight: "0.5rem" }}
-              />
-              Yes
-            </label>
-            <label className={`glass-radio-option ${answer === "no" ? "selected" : ""}`}>
-              <input
-                type="radio"
-                name="yesno"
-                value="no"
-                checked={answer === "no"}
-                onChange={(e) => setAnswer(e.target.value)}
-                required={currentQuestion.required}
-                style={{ marginRight: "0.5rem" }}
-              />
-              No
-            </label>
-          </div>
-        );
-      case "multi":
-        return (
-          <div className="glass-radio-group">
-            {currentQuestion.choices?.map((choice) => (
-              <label key={choice.value} className={`glass-radio-option ${answer === choice.value ? "selected" : ""}`}>
-                <input
-                  type="radio"
-                  name="choice"
-                  value={choice.value}
-                  checked={answer === choice.value}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  required={currentQuestion.required}
-                  style={{ marginRight: "0.5rem" }}
-                />
-                {choice.label}
-              </label>
-            ))}
-          </div>
-        );
-      case "dropdown":
-        return (
-          <select
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            required={currentQuestion.required}
-            className="glass-select"
-          >
-            <option value="">Select an option...</option>
-            {currentQuestion.choices?.map((choice) => (
-              <option key={choice.value} value={choice.value} style={{ background: "#1e3a8a", color: "white" }}>
-                {choice.label}
-              </option>
-            ))}
-          </select>
-        );
-      default:
-        return null;
+    if (currentQuestion.type === "instruction") return null;
+
+    if (currentQuestion.type === "text" || currentQuestion.type === "email" || currentQuestion.type === "phone") {
+      return (
+        <Input
+          type={currentQuestion.type === "email" ? "email" : currentQuestion.type === "phone" ? "tel" : "text"}
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          required={currentQuestion.required}
+        />
+      );
     }
+
+    if (currentQuestion.type === "yesno" || currentQuestion.type === "multi") {
+      const options =
+        currentQuestion.type === "yesno"
+          ? [
+              { value: "yes", label: "Yes" },
+              { value: "no", label: "No" },
+            ]
+          : currentQuestion.choices || [];
+      return (
+        <div className="grid gap-3">
+          {options.map((option) => (
+            <label
+              key={option.value}
+              className="ui-surface-field ui-border ui-radius-md flex cursor-pointer items-center gap-2 px-4 py-3"
+              style={answer === option.value ? { borderColor: "var(--accent)" } : undefined}
+            >
+              <input
+                type="radio"
+                name="choice"
+                value={option.value}
+                checked={answer === option.value}
+                onChange={(e) => setAnswer(e.target.value)}
+                required={currentQuestion.required}
+              />
+              <span className="type-body-md">{option.label}</span>
+            </label>
+          ))}
+        </div>
+      );
+    }
+
+    if (currentQuestion.type === "dropdown") {
+      return (
+        <Select value={answer} onChange={(e) => setAnswer(e.target.value)} required={currentQuestion.required}>
+          <option value="">Select an option...</option>
+          {currentQuestion.choices?.map((choice) => (
+            <option key={choice.value} value={choice.value}>
+              {choice.label}
+            </option>
+          ))}
+        </Select>
+      );
+    }
+
+    return null;
   };
 
-  const containerStyle: React.CSSProperties = {
+  const shellStyle: React.CSSProperties = {
     minHeight: "100vh",
     ...(backgroundImageUrl
-      ? {
-          backgroundImage: `url(${backgroundImageUrl})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }
+      ? { backgroundImage: `url(${backgroundImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
       : {}),
+    ["--accent" as any]: accentColor,
+    ["--accent-contrast" as any]: accentContrast,
   };
 
   if (state === "loading") {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }} className="text-primary">
-        <p>Loading...</p>
+      <div style={shellStyle} className="flex min-h-screen items-center justify-center">
+        <p className="type-body-md">Loading...</p>
       </div>
     );
   }
 
   if (state === "start") {
     return (
-      <div style={{ ...containerStyle, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "2rem 1rem", maxWidth: "800px", margin: "0 auto", gap: "2rem" }}>
-          <div className="runner-header">
-            <div className="runner-logo">
-              <Image src="/sflogotrans.png" alt="SF Logo" width={60} height={60} style={{ objectFit: "contain" }} />
-            </div>
+      <div style={shellStyle} className="flex min-h-screen items-center justify-center p-4">
+        <section className="ui-surface-panel ui-border ui-radius-lg flex w-full max-w-[760px] flex-col items-center gap-6 px-8 py-10 text-center">
+          <div className="type-heading-md">
+            Q<span style={{ color: "var(--accent)" }}>&amp;</span>A
           </div>
-          <div style={{ textAlign: "center", maxWidth: "700px", width: "100%" }}>
-            <h1 className="hero-title orange-text" style={{ marginBottom: "1rem" }}>{formName || "SF Coaching"}</h1>
-            <p className="hero-description">{resolvedIntroText}</p>
-          </div>
-          <button
-            onClick={handleStart}
-            disabled={isSubmitting}
-            className="btn-glass btn-glass-primary liquid-shine"
-            style={{ cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.6 : 1, padding: "1rem 2.5rem", fontSize: "1.125rem", fontWeight: "600", minWidth: "200px" }}
-          >
-            {isSubmitting ? "Starting..." : "3-2-1-Go"}
-          </button>
-          {error && <p style={{ color: "#f5576c", fontSize: "1rem", textAlign: "center" }}>{error}</p>}
-        </div>
+          <h1 className="type-display-md m-0">{formName || "Application"}</h1>
+          <p className="type-body-md ui-text-secondary m-0">{resolvedIntroText}</p>
+          <Button variant="accent" onClick={handleStart} disabled={isSubmitting} className="min-w-[220px]">
+            {isSubmitting ? "Starting..." : "Start"}
+          </Button>
+          {error && <p className="m-0 text-[var(--danger-fg)]">{error}</p>}
+        </section>
       </div>
     );
   }
 
   if (state === "question" && currentQuestion) {
     const progressPercent = totalQuestions > 0 ? Math.min(100, ((stepIndex + 1) / totalQuestions) * 100) : 0;
+    const rawTitle = currentQuestion.renderedTitle ?? currentQuestion.title;
+    const displayTitle = rawTitle.replace(/\\n/g, "\n");
+
     return (
-      <div style={{ ...containerStyle, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "2rem 1rem", maxWidth: "800px", margin: "0 auto", gap: "2rem" }}>
-          <div className="runner-header">
-            <div className="runner-logo">
-              <Image src="/sflogotrans.png" alt="SF Logo" width={60} height={60} style={{ objectFit: "contain" }} />
-            </div>
+      <div style={shellStyle} className="flex min-h-screen items-center justify-center p-4">
+        <section className="ui-surface-panel ui-border ui-radius-lg flex w-full max-w-[760px] flex-col gap-6 px-8 py-8">
+          <div className="h-[6px] w-full overflow-hidden rounded-full bg-[var(--bg-field)]">
+            <div className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-150" style={{ width: `${progressPercent}%` }} />
           </div>
-          <div className="glass-card-prominent fade-in-up" style={{ display: "flex", flexDirection: "column", width: "100%", gap: "1.5rem" }}>
-            <div className="glass-progress-bar" style={{ marginBottom: "0.5rem" }}>
-              <div className="glass-progress-fill" style={{ width: `${progressPercent}%` }} />
+
+          <h2 className="type-heading-lg m-0 whitespace-pre-line">{displayTitle}</h2>
+          {(currentQuestion.renderedHelpText ?? currentQuestion.helpText) && (
+            <p className="type-body-md ui-text-secondary -mt-3 m-0">{currentQuestion.renderedHelpText ?? currentQuestion.helpText}</p>
+          )}
+          {error && <p className="m-0 text-[var(--danger-fg)]">{error}</p>}
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleNext();
+            }}
+            className="flex flex-col gap-6"
+          >
+            {renderInput()}
+            <div className={`flex gap-3 ${currentQuestion.type === "instruction" ? "flex-row-reverse" : ""}`}>
+              {currentQuestion.type !== "instruction" && (
+                <Button type="button" variant="ghost" onClick={handleBack} disabled={isSubmitting || stepIndex === 0}>
+                  Back
+                </Button>
+              )}
+              <Button type="submit" variant="accent" disabled={isSubmitting} className={currentQuestion.type === "instruction" ? "w-full" : ""}>
+                {isSubmitting ? "Saving..." : "Next"}
+              </Button>
             </div>
-            {(() => {
-              const rawTitle = currentQuestion.renderedTitle ?? currentQuestion.title;
-              const displayTitle = rawTitle.replace(/\\n/g, "\n");
-              return <h2 className="form-section-title" style={{ whiteSpace: "pre-line" }}>{displayTitle}</h2>;
-            })()}
-            {(currentQuestion.renderedHelpText ?? currentQuestion.helpText) && (
-              <p className="text-secondary" style={{ fontSize: "1rem", margin: 0, marginTop: "-1rem" }}>
-                {currentQuestion.renderedHelpText ?? currentQuestion.helpText}
-              </p>
-            )}
-            {error && <p style={{ color: "#f5576c", fontSize: "0.9rem", margin: 0 }}>{error}</p>}
-            <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              {renderInput()}
-              <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem", flexDirection: currentQuestion.type === "instruction" ? "row-reverse" : "row" }}>
-                {currentQuestion.type !== "instruction" && (
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    disabled={isSubmitting || stepIndex === 0}
-                    className="btn-glass btn-glass-outline"
-                    style={{ cursor: stepIndex === 0 || isSubmitting ? "not-allowed" : "pointer", opacity: stepIndex === 0 || isSubmitting ? 0.6 : 1 }}
-                  >
-                    Back
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="btn-glass btn-glass-primary liquid-shine"
-                  style={{ cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.6 : 1, flex: currentQuestion.type === "instruction" ? 1 : undefined, width: currentQuestion.type === "instruction" ? "100%" : undefined, padding: "1rem 2.5rem", fontSize: "1.125rem", fontWeight: "600" }}
-                >
-                  {isSubmitting ? "Saving..." : "Next"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </section>
       </div>
     );
   }
 
   if (state === "completed") {
     return (
-      <div style={{ ...containerStyle, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className="glass-card-prominent fade-in-up" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1rem", padding: "2rem", maxWidth: "500px", margin: "0 auto" }}>
-          <h1 className="gradient-text" style={{ fontSize: "2rem", fontWeight: "bold", margin: 0 }}>{resolvedCompletionTitle}</h1>
-          <p className="text-secondary" style={{ fontSize: "1rem" }}>{resolvedCompletionMessage}</p>
-        </div>
+      <div style={shellStyle} className="flex min-h-screen items-center justify-center p-4">
+        <section className="ui-surface-panel ui-border ui-radius-lg flex w-full max-w-[560px] flex-col items-center gap-4 px-8 py-10 text-center">
+          <h1 className="type-display-md m-0">{resolvedCompletionTitle}</h1>
+          <p className="type-body-md ui-text-secondary m-0">{resolvedCompletionMessage}</p>
+        </section>
       </div>
     );
   }
 
   return null;
 }
-

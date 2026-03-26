@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Button, Card, Input, Select } from "@/components/ui";
 import { getQuestion, updateQuestion } from "../actions";
 import { ChoiceManager } from "./components/ChoiceManager";
 import { DeleteQuestionButton } from "./components/DeleteQuestionButton";
@@ -12,9 +13,7 @@ export default async function EditQuestionPage({
   const { id, questionId } = await params;
   const question = await getQuestion(questionId);
 
-  if (!question) {
-    notFound();
-  }
+  if (!question) notFound();
 
   async function handleUpdate(formData: FormData) {
     "use server";
@@ -26,272 +25,76 @@ export default async function EditQuestionPage({
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "2rem",
-        maxWidth: "600px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          Edit Question
-        </h1>
-        <Link
-          href={`/admin/qanda/forms/${id}`}
-          style={{
-            color: "#0066cc",
-            textDecoration: "underline",
-            fontSize: "0.9rem",
-          }}
-        >
+    <div className="flex max-w-[800px] flex-col gap-8">
+      <div className="flex items-center justify-between">
+        <h1 className="type-display-md m-0">Edit question</h1>
+        <Link href={`/admin/qanda/forms/${id}`} className="type-body-sm ui-text-secondary">
           Back to form
         </Link>
       </div>
 
-      <form
-        action={handleUpdate}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1.5rem",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="type"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Type <span style={{ color: "#dc2626" }}>*</span>
-          </label>
-          <select
-            id="type"
-            name="type"
-            defaultValue={question.type}
-            required
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          >
-            <option value="text">Text</option>
-            <option value="email">Email</option>
-            <option value="phone">Phone</option>
-            <option value="yesno">Yes/No</option>
-            <option value="multi">Multiple Choice</option>
-            <option value="dropdown">Dropdown</option>
-            <option value="instruction">Instruction</option>
-          </select>
-        </div>
+      <Card className="p-6">
+        <form action={handleUpdate} className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="type" className="type-body-sm ui-text-primary">
+              Type <span className="text-[var(--danger-fg)]">*</span>
+            </label>
+            <Select id="type" name="type" defaultValue={question.type} required>
+              <option value="text">Text</option>
+              <option value="email">Email</option>
+              <option value="phone">Phone</option>
+              <option value="yesno">Yes/No</option>
+              <option value="multi">Multiple choice</option>
+              <option value="dropdown">Dropdown</option>
+              <option value="instruction">Instruction</option>
+            </Select>
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="key"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Key <span style={{ color: "#dc2626" }}>*</span>
-          </label>
-          <input
-            type="text"
-            id="key"
-            name="key"
-            defaultValue={question.key}
-            required
-            pattern="[a-z0-9_]+"
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-          <small
-            style={{
-              fontSize: "0.8rem",
-              color: "#666",
-            }}
-          >
-            Lowercase letters, numbers, and underscores only. No spaces.
-          </small>
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="key" className="type-body-sm ui-text-primary">
+              Key <span className="text-[var(--danger-fg)]">*</span>
+            </label>
+            <Input type="text" id="key" name="key" defaultValue={question.key} required pattern="[a-z0-9_]+" />
+            <small className="type-meta-sm ui-text-muted">Lowercase letters, numbers, and underscores only.</small>
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="title"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Title <span style={{ color: "#dc2626" }}>*</span>
-          </label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            defaultValue={question.title}
-            required
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="title" className="type-body-sm ui-text-primary">
+              Title <span className="text-[var(--danger-fg)]">*</span>
+            </label>
+            <Input type="text" id="title" name="title" defaultValue={question.title} required />
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="helpText"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Help Text (optional)
-          </label>
-          <textarea
-            id="helpText"
-            name="helpText"
-            rows={3}
-            defaultValue={question.helpText || ""}
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="helpText" className="type-body-sm ui-text-primary">
+              Help text (optional)
+            </label>
+            <textarea id="helpText" name="helpText" rows={3} defaultValue={question.helpText || ""} className="ui-input" />
+          </div>
 
-        {question.type !== "instruction" && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
-            <input
-              type="checkbox"
-              id="required"
-              name="required"
-              defaultChecked={question.required}
-              style={{
-                width: "1rem",
-                height: "1rem",
-              }}
-            />
-            <label
-              htmlFor="required"
-              style={{
-                fontSize: "0.9rem",
-                fontWeight: "500",
-              }}
-            >
+          {question.type !== "instruction" ? (
+            <label className="type-body-sm ui-text-primary inline-flex items-center gap-2">
+              <input type="checkbox" id="required" name="required" defaultChecked={question.required} />
               Required
             </label>
+          ) : (
+            <input type="hidden" name="required" value="" />
+          )}
+
+          <div className="mt-2 flex gap-3">
+            <Button type="submit">Save changes</Button>
+            <Link href={`/admin/qanda/forms/${id}`} className="no-underline">
+              <Button variant="ghost">Cancel</Button>
+            </Link>
+            <DeleteQuestionButton questionId={questionId} formId={id} />
           </div>
-        )}
-        {question.type === "instruction" && <input type="hidden" name="required" value="" />}
+        </form>
+      </Card>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "1rem",
-            marginTop: "1rem",
-          }}
-        >
-          <button
-            type="submit"
-            style={{
-              padding: "0.75rem 1.5rem",
-              backgroundColor: "#0066cc",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "1rem",
-              fontWeight: "500",
-              cursor: "pointer",
-            }}
-          >
-            Save Changes
-          </button>
-          <Link
-            href={`/admin/qanda/forms/${id}`}
-            style={{
-              padding: "0.75rem 1.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              textDecoration: "none",
-              color: "#000",
-              fontSize: "1rem",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            Cancel
-          </Link>
-          <DeleteQuestionButton questionId={questionId} formId={id} />
-        </div>
-      </form>
-
-      {/* Choices Section (only for multi/dropdown) */}
       {(question.type === "multi" || question.type === "dropdown") && (
-        <div
-          style={{
-            marginTop: "3rem",
-            paddingTop: "2rem",
-            borderTop: "1px solid #e5e5e5",
-          }}
-        >
+        <section className="border-t border-[var(--border-subtle)] pt-8">
           <ChoiceManager questionId={questionId} choices={question.choices} />
-        </div>
+        </section>
       )}
     </div>
   );

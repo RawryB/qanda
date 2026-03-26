@@ -1,161 +1,66 @@
 import Link from "next/link";
 import { getForms } from "./actions";
 import { DeleteFormButton } from "./components/DeleteFormButton";
-
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
+import { Badge, Button, Card } from "@/components/ui";
 
 export default async function QandaFormsPage() {
   const forms = await getForms();
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "2rem",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          Qanda Forms
-        </h1>
-        <Link
-          href="/admin/qanda/forms/new"
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#0066cc",
-            color: "#fff",
-            textDecoration: "none",
-            borderRadius: "4px",
-            fontSize: "0.9rem",
-            fontWeight: "500",
-          }}
-        >
-          New Form
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center justify-between">
+        <h1 className="type-display-md m-0">QandA forms</h1>
+        <Link href="/admin/qanda/forms/new" className="no-underline">
+          <Button>New form</Button>
         </Link>
       </div>
 
       {forms.length === 0 ? (
-        <p
-          style={{
-            color: "#666",
-            fontSize: "1rem",
-          }}
-        >
+        <p className="type-body-md ui-text-secondary">
           No forms yet. Create your first form to get started.
         </p>
       ) : (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-          }}
-        >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {forms.map((form) => (
-            <div
-              key={form.id}
-              style={{
-                border: "1px solid #e5e5e5",
-                borderRadius: "4px",
-                padding: "1rem",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.5rem",
-                  flex: 1,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "1rem",
-                    alignItems: "center",
-                  }}
-                >
+            <Card key={form.id} className="flex flex-col gap-4 p-4">
+              <div className="h-1 w-full rounded-full" style={{ background: form.status === "published" ? "var(--success-fg)" : "var(--border-subtle)" }} />
+
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-1 items-center gap-2">
                   <Link
                     href={`/admin/qanda/forms/${form.id}`}
-                    style={{
-                      fontSize: "1.1rem",
-                      fontWeight: "500",
-                      color: "#000",
-                      textDecoration: "none",
-                    }}
+                    className="type-heading-md ui-text-primary no-underline hover:underline"
                   >
                     {form.name}
                   </Link>
-                  <span
-                    style={{
-                      padding: "0.25rem 0.5rem",
-                      backgroundColor: "#f0f0f0",
-                      borderRadius: "4px",
-                      fontSize: "0.75rem",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {form.status}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "1rem",
-                    fontSize: "0.9rem",
-                    color: "#666",
-                  }}
-                >
-                  <span>Slug: {form.slug}</span>
-                  <span>Updated: {formatDate(form.updatedAt)}</span>
+                  <Badge variant={form.status === "published" ? "live" : "draft"}>{form.status}</Badge>
                 </div>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "0.5rem",
-                }}
-              >
-                <Link
-                  href={`/admin/qanda/forms/${form.id}`}
-                  style={{
-                    padding: "0.5rem 1rem",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    textDecoration: "none",
-                    color: "#000",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  Edit
+
+              <div className="type-meta-sm ui-text-secondary">
+                {form.questionCount} questions
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="type-heading-md">{form.responseCount}</div>
+                  <div className="type-meta-sm ui-text-secondary">Responses</div>
+                </div>
+                <div>
+                  <div className="type-heading-md">{form.completionRate === null ? "—" : `${form.completionRate}%`}</div>
+                  <div className="type-meta-sm ui-text-secondary">Completion</div>
+                </div>
+              </div>
+
+              <div className="flex justify-start gap-1">
+                <Link href={`/admin/qanda/forms/${form.id}`} className="no-underline">
+                  <Button variant="ghost" size="sm" className="px-2" title="Edit form">
+                    ✎
+                  </Button>
                 </Link>
                 <DeleteFormButton formId={form.id} formName={form.name} />
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

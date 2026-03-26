@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { moveQuestion, deleteQuestion } from "../actions";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui";
+import { deleteQuestion, moveQuestion } from "../actions";
 
 export function MoveQuestionButton({
   formId,
@@ -30,25 +31,9 @@ export function MoveQuestionButton({
   };
 
   return (
-    <button
-      onClick={handleMove}
-      disabled={disabled || isMoving}
-      style={{
-        padding: "0.5rem 0.75rem",
-        border: "1px solid #ccc",
-        borderRadius: "4px",
-        backgroundColor: "#fff",
-        color: "#000",
-        cursor: disabled || isMoving ? "not-allowed" : "pointer",
-        opacity: disabled || isMoving ? 0.6 : 1,
-        fontSize: "1rem",
-        fontWeight: "bold",
-        minWidth: "2rem",
-      }}
-      title={direction === "up" ? "Move up" : "Move down"}
-    >
+    <Button variant="ghost" size="sm" onClick={handleMove} disabled={disabled || isMoving} title={direction === "up" ? "Move up" : "Move down"}>
       {direction === "up" ? "↑" : "↓"}
-    </button>
+    </Button>
   );
 }
 
@@ -68,7 +53,6 @@ export function DeleteQuestionButton({
       setShowConfirm(true);
       return;
     }
-
     setIsDeleting(true);
     try {
       await deleteQuestion(questionId);
@@ -82,72 +66,21 @@ export function DeleteQuestionButton({
 
   if (showConfirm) {
     return (
-      <div
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-          alignItems: "center",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "0.9rem",
-            color: "#666",
-          }}
-        >
-          Delete "{questionTitle}"?
-        </span>
-        <button
-          onClick={handleDelete}
-          disabled={isDeleting}
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#dc2626",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "0.9rem",
-            cursor: isDeleting ? "not-allowed" : "pointer",
-            opacity: isDeleting ? 0.6 : 1,
-          }}
-        >
+      <div className="flex items-center gap-2">
+        <span className="type-meta-sm ui-text-secondary">Delete "{questionTitle}"?</span>
+        <Button onClick={handleDelete} disabled={isDeleting} className="bg-[var(--danger-fg)] text-[var(--bg-app)]">
           {isDeleting ? "Deleting..." : "Confirm"}
-        </button>
-        <button
-          onClick={() => {
-            setShowConfirm(false);
-            setIsDeleting(false);
-          }}
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#f0f0f0",
-            color: "#000",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            fontSize: "0.9rem",
-            cursor: "pointer",
-          }}
-        >
+        </Button>
+        <Button variant="ghost" onClick={() => { setShowConfirm(false); setIsDeleting(false); }}>
           Cancel
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <button
-      onClick={handleDelete}
-      style={{
-        padding: "0.5rem 1rem",
-        backgroundColor: "#dc2626",
-        color: "#fff",
-        border: "none",
-        borderRadius: "4px",
-        fontSize: "0.9rem",
-        cursor: "pointer",
-      }}
-    >
+    <Button onClick={handleDelete} className="bg-[var(--danger-fg)] text-[var(--bg-app)]">
       Delete
-    </button>
+    </Button>
   );
 }

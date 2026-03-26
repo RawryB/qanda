@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Card } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { getQuestions } from "../../../questions/actions";
 import { updateRule } from "../../actions";
@@ -12,71 +13,28 @@ export default async function EditRulePage({
 }) {
   const { id, ruleId } = await params;
   const questions = await getQuestions(id);
-
   const rule = await prisma.qandaLogicRule.findUnique({
     where: { id: ruleId },
-    include: {
-      sourceQuestion: true,
-    },
+    include: { sourceQuestion: true },
   });
 
-  if (!rule || rule.formId !== id) {
-    notFound();
-  }
+  if (!rule || rule.formId !== id) notFound();
 
   async function handleUpdateRule(formData: FormData) {
     "use server";
-    try {
-      await updateRule(ruleId, id, formData);
-    } catch (error: any) {
-      throw error;
-    }
+    await updateRule(ruleId, id, formData);
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "2rem",
-        maxWidth: "900px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          Edit Rule
-        </h1>
-        <Link
-          href={`/admin/qanda/forms/${id}/rules`}
-          style={{
-            color: "#0066cc",
-            textDecoration: "underline",
-            fontSize: "0.9rem",
-          }}
-        >
+    <div className="flex max-w-[900px] flex-col gap-8">
+      <div className="flex items-center justify-between">
+        <h1 className="type-display-md m-0">Edit rule</h1>
+        <Link href={`/admin/qanda/forms/${id}/rules`} className="type-body-sm ui-text-secondary">
           Back to rules
         </Link>
       </div>
 
-      <div
-        style={{
-          border: "1px solid #e5e5e5",
-          borderRadius: "4px",
-          padding: "1.5rem",
-        }}
-      >
+      <Card className="p-6">
         <RuleForm
           formId={id}
           questions={questions}
@@ -89,7 +47,7 @@ export default async function EditRulePage({
             destinationQuestionId: rule.destinationQuestionId || undefined,
           }}
         />
-      </div>
+      </Card>
     </div>
   );
 }

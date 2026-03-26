@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Button, Input, Select } from "@/components/ui";
 
 export function QuestionEditForm({
   question,
@@ -13,230 +14,52 @@ export function QuestionEditForm({
   action: (formData: FormData) => Promise<void>;
 }) {
   const [type, setType] = useState(question.type);
-
   const isInstruction = type === "instruction";
 
   return (
-    <>
-      <form
-        action={action}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1.5rem",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="type"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Type <span style={{ color: "#dc2626" }}>*</span>
-          </label>
-          <select
-            id="type"
-            name="type"
-            required
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          >
-            <option value="text">Text</option>
-            <option value="email">Email</option>
-            <option value="phone">Phone</option>
-            <option value="yesno">Yes/No</option>
-            <option value="multi">Multiple Choice</option>
-            <option value="dropdown">Dropdown</option>
-            <option value="instruction">Instruction</option>
-          </select>
-        </div>
+    <form action={action} className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <label htmlFor="type" className="type-body-sm ui-text-primary">Type *</label>
+        <Select id="type" name="type" required value={type} onChange={(e) => setType(e.target.value)}>
+          <option value="text">Text</option>
+          <option value="email">Email</option>
+          <option value="phone">Phone</option>
+          <option value="yesno">Yes/No</option>
+          <option value="multi">Multiple choice</option>
+          <option value="dropdown">Dropdown</option>
+          <option value="instruction">Instruction</option>
+        </Select>
+      </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="key"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Key <span style={{ color: "#dc2626" }}>*</span>
-          </label>
-          <input
-            type="text"
-            id="key"
-            name="key"
-            defaultValue={question.key}
-            required
-            pattern="[a-z0-9_]+"
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-          <small
-            style={{
-              fontSize: "0.8rem",
-              color: "#666",
-            }}
-          >
-            Lowercase letters, numbers, and underscores only. No spaces.
-          </small>
-        </div>
+      <div className="flex flex-col gap-2">
+        <label htmlFor="key" className="type-body-sm ui-text-primary">Key *</label>
+        <Input type="text" id="key" name="key" defaultValue={question.key} required pattern="[a-z0-9_]+" />
+      </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="title"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Title <span style={{ color: "#dc2626" }}>*</span>
-          </label>
-          <textarea
-            id="title"
-            name="title"
-            rows={2}
-            defaultValue={question.title}
-            required
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-              resize: "vertical",
-            }}
-          />
-        </div>
+      <div className="flex flex-col gap-2">
+        <label htmlFor="title" className="type-body-sm ui-text-primary">Title *</label>
+        <textarea id="title" name="title" rows={2} defaultValue={question.title} required className="ui-input" />
+      </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          <label
-            htmlFor="helpText"
-            style={{
-              fontSize: "0.9rem",
-              fontWeight: "500",
-            }}
-          >
-            Help Text (optional)
-          </label>
-          <textarea
-            id="helpText"
-            name="helpText"
-            rows={3}
-            defaultValue={question.helpText || ""}
-            style={{
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "1rem",
-            }}
-          />
-        </div>
+      <div className="flex flex-col gap-2">
+        <label htmlFor="helpText" className="type-body-sm ui-text-primary">Help text (optional)</label>
+        <textarea id="helpText" name="helpText" rows={3} defaultValue={question.helpText || ""} className="ui-input" />
+      </div>
 
-        {!isInstruction && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
-            <input
-              type="checkbox"
-              id="required"
-              name="required"
-              defaultChecked={question.required}
-              style={{
-                width: "1rem",
-                height: "1rem",
-              }}
-            />
-            <label
-              htmlFor="required"
-              style={{
-                fontSize: "0.9rem",
-                fontWeight: "500",
-              }}
-            >
-              Required
-            </label>
-          </div>
-        )}
-        {isInstruction && <input type="hidden" name="required" value="" />}
+      {!isInstruction && (
+        <label className="type-body-sm ui-text-primary inline-flex items-center gap-2">
+          <input type="checkbox" id="required" name="required" defaultChecked={question.required} />
+          Required
+        </label>
+      )}
+      {isInstruction && <input type="hidden" name="required" value="" />}
 
-        <div
-          style={{
-            display: "flex",
-            gap: "1rem",
-            marginTop: "1rem",
-          }}
-        >
-          <button
-            type="submit"
-            style={{
-              padding: "0.75rem 1.5rem",
-              backgroundColor: "#0066cc",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "1rem",
-              fontWeight: "500",
-              cursor: "pointer",
-            }}
-          >
-            Save Changes
-          </button>
-          <Link
-            href={`/admin/qanda/forms/${formId}`}
-            style={{
-              padding: "0.75rem 1.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              textDecoration: "none",
-              color: "#000",
-              fontSize: "1rem",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            Cancel
-          </Link>
-        </div>
-      </form>
-    </>
+      <div className="mt-2 flex gap-3">
+        <Button type="submit">Save changes</Button>
+        <Link href={`/admin/qanda/forms/${formId}`} className="no-underline">
+          <Button variant="ghost">Cancel</Button>
+        </Link>
+      </div>
+    </form>
   );
 }

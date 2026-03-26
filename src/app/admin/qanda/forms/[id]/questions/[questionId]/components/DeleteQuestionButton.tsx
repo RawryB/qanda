@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui";
 import { deleteQuestion } from "../../actions";
 
 export function DeleteQuestionButton({
@@ -13,10 +14,7 @@ export function DeleteQuestionButton({
   const router = useRouter();
 
   async function handleDelete() {
-    if (!confirm("Are you sure you want to delete this question?")) {
-      return;
-    }
-
+    if (!confirm("Are you sure you want to delete this question?")) return;
     try {
       await deleteQuestion(questionId);
       router.push(`/admin/qanda/forms/${formId}`);
@@ -26,20 +24,8 @@ export function DeleteQuestionButton({
   }
 
   return (
-    <button
-      onClick={handleDelete}
-      style={{
-        padding: "0.75rem 1.5rem",
-        backgroundColor: "#dc2626",
-        color: "#fff",
-        border: "none",
-        borderRadius: "4px",
-        fontSize: "1rem",
-        fontWeight: "500",
-        cursor: "pointer",
-      }}
-    >
+    <Button variant="ghost" onClick={handleDelete} className="border-[var(--danger-fg)] text-[var(--danger-fg)]">
       Delete
-    </button>
+    </Button>
   );
 }
