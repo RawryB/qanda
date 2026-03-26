@@ -7,10 +7,11 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   // Applicant-facing runner routes (must be public)
   "/qanda(.*)",
+  "/forms(.*)",
   // Public Q&A API used by runner (must be public)
-  "/api/qanda/public(.*)",
+  "/api/forms/public(.*)",
   // Health check
-  "/api/qanda/health(.*)",
+  "/api/forms/health(.*)",
 ]);
 
 const proxy = clerkMiddleware(async (auth, req) => {

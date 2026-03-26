@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SwimFast",
-  description: "SwimFast",
+  title: "Q&A",
+  description: "Q&A forms and submissions",
 };
 
 export default function RootLayout({

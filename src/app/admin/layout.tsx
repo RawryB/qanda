@@ -51,7 +51,7 @@ export default async function AdminLayout({
               display: "block",
             }}
           >
-            SwimFast
+            Q&A
           </Link>
           <Link
             href="/admin/qanda"

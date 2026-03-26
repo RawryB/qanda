@@ -15,7 +15,7 @@ export default function Home() {
           margin: 0,
         }}
       >
-        SwimFast
+        Q&A
       </h1>
     </div>
   );

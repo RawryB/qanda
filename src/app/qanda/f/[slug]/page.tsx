@@ -47,7 +47,7 @@ export default function QandaRunnerPage() {
     // Fetch form name for start screen
     const fetchFormName = async () => {
       try {
-        const response = await fetch(`/api/qanda/public/form-info?slug=${slug}`);
+        const response = await fetch(`/api/forms/public/form-info?slug=${slug}`);
         if (response.ok) {
           const data = await response.json();
           setFormName(data.name);
@@ -72,7 +72,7 @@ export default function QandaRunnerPage() {
     setError("");
 
     try {
-      const response = await fetch("/api/qanda/public/start", {
+      const response = await fetch("/api/forms/public/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug }),
@@ -120,7 +120,7 @@ export default function QandaRunnerPage() {
     setError("");
 
     try {
-      const response = await fetch("/api/qanda/public/answer", {
+      const response = await fetch("/api/forms/public/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -167,7 +167,7 @@ export default function QandaRunnerPage() {
     setError("");
 
     try {
-      const response = await fetch("/api/qanda/public/back", {
+      const response = await fetch("/api/forms/public/back", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ submissionId }),
