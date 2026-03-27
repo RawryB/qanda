@@ -191,7 +191,12 @@ export function FormEditorWorkspace({
           <span className="type-label-sm ui-text-tertiary">
             {isPending ? "Saving..." : "Saved"}
           </span>
-          <a href="#" className="no-underline">
+          <a
+            href={`/forms/${form.slug}?preview=1`}
+            target="_blank"
+            rel="noreferrer"
+            className="no-underline"
+          >
             <Button variant="ghost" size="sm">
               Preview
             </Button>

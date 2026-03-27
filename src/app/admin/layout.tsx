@@ -29,16 +29,22 @@ export default async function AdminLayout({
         <div className="mb-2 type-label-sm uppercase tracking-[0.12em] ui-text-tertiary">Workspace</div>
         <nav className="flex flex-col gap-1">
           <Link
-            href="/"
+            href="/admin/qanda/forms"
             className={cn(navItemClass, "type-body-sm ui-text-secondary hover:bg-[var(--bg-field)] hover:ui-text-primary")}
           >
             Home
           </Link>
           <Link
-            href="/admin/qanda"
-            className={cn(navItemClass, "type-body-sm bg-[var(--bg-field)] ui-text-primary")}
+            href="/admin/qanda/submissions"
+            className={cn(navItemClass, "type-body-sm ui-text-secondary hover:bg-[var(--bg-field)] hover:ui-text-primary")}
           >
-            QandA
+            Submissions
+          </Link>
+          <Link
+            href="/admin/qanda/settings"
+            className={cn(navItemClass, "type-body-sm ui-text-secondary hover:bg-[var(--bg-field)] hover:ui-text-primary")}
+          >
+            Settings
           </Link>
         </nav>
       </aside>

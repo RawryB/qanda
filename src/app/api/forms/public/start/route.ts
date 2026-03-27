@@ -1,19 +1,27 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { renderTemplate } from "@/lib/qanda/template";
 
 export async function POST(request: Request) {
   try {
-    const { slug } = await request.json();
+    const { slug, preview } = await request.json();
 
     if (!slug) {
       return NextResponse.json({ error: "Slug is required" }, { status: 400 });
     }
 
+    if (preview) {
+      const { userId } = await auth();
+      if (!userId) {
+        return NextResponse.json({ error: "Unauthorized preview request" }, { status: 401 });
+      }
+    }
+
     const form = await prisma.qandaForm.findFirst({
       where: {
         slug,
-        status: "published",
+        ...(preview ? {} : { status: "published" }),
       },
       include: {
         questions: {

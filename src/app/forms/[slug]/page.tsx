@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui";
 
 type Question = {
@@ -62,7 +62,9 @@ function sanitizeFont(font: string, fallback: string) {
 
 export default function FormsRunnerPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const slug = params.slug as string;
+  const isPreview = searchParams.get("preview") === "1";
 
   const [state, setState] = useState<FormState>("loading");
   const [formName, setFormName] = useState("");
@@ -108,7 +110,7 @@ export default function FormsRunnerPage() {
   useEffect(() => {
     const fetchFormName = async () => {
       try {
-        const response = await fetch(`/api/forms/public/form-info?slug=${slug}`);
+        const response = await fetch(`/api/forms/public/form-info?slug=${slug}${isPreview ? "&preview=1" : ""}`);
         if (response.ok) {
           const data = await response.json();
           setFormName(data.name);
@@ -130,7 +132,7 @@ export default function FormsRunnerPage() {
       setState("start");
     };
     if (slug) fetchFormName();
-  }, [slug]);
+  }, [slug, isPreview]);
 
   useEffect(() => {
     const families = Array.from(
@@ -160,7 +162,7 @@ export default function FormsRunnerPage() {
       const response = await fetch("/api/forms/public/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug }),
+        body: JSON.stringify({ slug, preview: isPreview }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to start form");
