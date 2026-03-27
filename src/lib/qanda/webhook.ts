@@ -30,6 +30,16 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
             },
           },
         },
+        resolvedOutcome: {
+          include: {
+            outcomeRule: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -83,6 +93,17 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
         name: submission.form.name,
       },
       completedAt: submission.completedAt?.toISOString() || null,
+      resolvedOutcome: submission.resolvedOutcome
+        ? {
+            matched: Boolean(submission.resolvedOutcome.outcomeRuleId),
+            outcomeRuleId: submission.resolvedOutcome.outcomeRuleId,
+            outcomeRuleName: submission.resolvedOutcome.outcomeRule?.name || null,
+            destinationType: submission.resolvedOutcome.destinationType,
+            destinationValue: submission.resolvedOutcome.destinationValue,
+            segmentKey: submission.resolvedOutcome.segmentKey,
+            resolvedAt: submission.resolvedOutcome.resolvedAt.toISOString(),
+          }
+        : null,
       answers,
       values,
     };

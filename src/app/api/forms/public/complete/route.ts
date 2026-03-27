@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { fireZapierOnCompletion } from "@/lib/qanda/webhook";
+import {
+  persistResolvedOutcome,
+  resolveSubmissionOutcome,
+} from "@/lib/qanda/outcome-resolver";
 
 export async function POST(request: Request) {
   try {
@@ -34,9 +38,24 @@ export async function POST(request: Request) {
     });
 
     await fireZapierOnCompletion(submissionId);
+    const outcome = await resolveSubmissionOutcome(submissionId);
+    await persistResolvedOutcome(submissionId, outcome);
+
+    const matchedRedirect =
+      outcome.matched && outcome.destinationType === "redirect_url"
+        ? outcome.destinationValue
+        : null;
 
     return NextResponse.json({
-      redirectUrl: submission.form.redirectUrl || null,
+      redirectUrl: matchedRedirect || submission.form.redirectUrl || null,
+      routing: {
+        matched: outcome.matched,
+        outcomeRuleId: outcome.outcomeRuleId,
+        outcomeRuleName: outcome.outcomeRuleName,
+        destinationType: outcome.destinationType,
+        destinationValue: outcome.destinationValue,
+        segmentKey: outcome.segmentKey,
+      },
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Failed to complete submission" }, { status: 500 });

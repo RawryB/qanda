@@ -3,6 +3,35 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+async function validateLogicCompareForSource(
+  formId: string,
+  sourceQuestionId: string,
+  operator: string,
+  compareValue: string | null,
+) {
+  if (operator === "is_true" || operator === "is_false" || operator === "any") return;
+
+  const trimmed = compareValue?.trim();
+  if (!trimmed) return;
+
+  const q = await prisma.qandaQuestion.findFirst({
+    where: { id: sourceQuestionId, formId },
+    include: { choices: true },
+  });
+  if (!q) throw new Error("Source question not found");
+
+  if (q.type === "multi" || q.type === "dropdown") {
+    const allowed = new Set(q.choices.map((c) => c.value));
+    if (!allowed.has(trimmed)) {
+      throw new Error("Compare value must be one of the configured choices for this question");
+    }
+  } else if (q.type === "yesno") {
+    if (trimmed !== "true" && trimmed !== "false") {
+      throw new Error("Compare value must match Yes or No for yes/no questions");
+    }
+  }
+}
+
 export async function getRules(formId: string) {
   return await prisma.qandaLogicRule.findMany({
     where: { formId },
@@ -43,6 +72,8 @@ export async function createRule(formId: string, formData: FormData) {
       throw new Error("Compare value is required for this operator");
     }
   }
+
+  await validateLogicCompareForSource(formId, sourceQuestionId, operator, compareValue);
 
   // Validate destination
   let isEnd = false;
@@ -112,6 +143,8 @@ export async function updateRule(ruleId: string, formId: string, formData: FormD
       throw new Error("Compare value is required for this operator");
     }
   }
+
+  await validateLogicCompareForSource(formId, sourceQuestionId, operator, compareValue);
 
   let isEnd = false;
   let finalDestinationQuestionId: string | null = null;

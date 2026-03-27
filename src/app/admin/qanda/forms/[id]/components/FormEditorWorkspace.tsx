@@ -5,6 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Card, Input, Select } from "@/components/ui";
 import { updateForm } from "../../actions";
+import {
+  createOutcomeRule,
+  deleteOutcomeRule,
+  duplicateOutcomeRule,
+  reorderOutcomeRule,
+  toggleOutcomeRule,
+  updateOutcomeRule,
+} from "../routing/actions";
 import { createRule } from "../rules/actions";
 import { DeleteRuleButton, MoveRuleButton } from "../rules/components/RuleActions";
 import { RuleForm } from "../rules/components/RuleForm";
@@ -26,6 +34,184 @@ type Question = {
   required: boolean;
   choices: Array<{ id: string; order: number; value: string; label: string }>;
 };
+
+function decodeConditionValue(operator: string, value: string) {
+  if (operator !== "in") return value;
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.join(", ");
+  } catch {
+    // Keep raw value if it is not JSON.
+  }
+  return value;
+}
+
+function RoutingConditionValueField({
+  question,
+  operator,
+  value,
+  onChange,
+}: {
+  question: Question | undefined;
+  operator: "equals" | "in";
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  if (!question) {
+    return (
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Select a question first"
+        disabled
+        className="opacity-60"
+      />
+    );
+  }
+
+  if (question.type === "instruction") {
+    return (
+      <p className="type-body-sm ui-text-secondary py-2">
+        No answer for this type — pick another question.
+      </p>
+    );
+  }
+
+  if (question.type === "multi" || question.type === "dropdown") {
+    const choices = question.choices || [];
+    if (choices.length === 0) {
+      return (
+        <p className="type-body-sm ui-text-secondary py-2">
+          Add choices to this question first.
+        </p>
+      );
+    }
+
+    if (operator === "equals") {
+      return (
+        <Select value={value} onChange={(e) => onChange(e.target.value)} required>
+          <option value="">Select an option</option>
+          {choices.map((c) => (
+            <option key={c.id} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </Select>
+      );
+    }
+
+    const selected = new Set(
+      value
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    );
+    const toggle = (choiceValue: string) => {
+      const next = new Set(selected);
+      if (next.has(choiceValue)) next.delete(choiceValue);
+      else next.add(choiceValue);
+      onChange(Array.from(next).join(", "));
+    };
+
+    return (
+      <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-[8px] border border-[var(--border-subtle)] p-3">
+        <span className="type-label-sm ui-text-tertiary">Match any of:</span>
+        {choices.map((c) => (
+          <label key={c.id} className="flex cursor-pointer items-center gap-2">
+            <input type="checkbox" checked={selected.has(c.value)} onChange={() => toggle(c.value)} />
+            <span className="type-body-sm ui-text-primary">{c.label}</span>
+          </label>
+        ))}
+      </div>
+    );
+  }
+
+  if (question.type === "yesno") {
+    // Answers are stored as valueText "true" | "false" (see public answer API).
+    if (operator === "equals") {
+      return (
+        <Select value={value} onChange={(e) => onChange(e.target.value)} required>
+          <option value="">Select</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </Select>
+      );
+    }
+
+    const selected = new Set(
+      value
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    );
+    const toggle = (v: string) => {
+      const next = new Set(selected);
+      if (next.has(v)) next.delete(v);
+      else next.add(v);
+      onChange(Array.from(next).join(", "));
+    };
+
+    return (
+      <div className="flex flex-col gap-2 rounded-[8px] border border-[var(--border-subtle)] p-3">
+        <span className="type-label-sm ui-text-tertiary">Match any of:</span>
+        <label className="flex cursor-pointer items-center gap-2">
+          <input type="checkbox" checked={selected.has("true")} onChange={() => toggle("true")} />
+          <span className="type-body-sm ui-text-primary">Yes</span>
+        </label>
+        <label className="flex cursor-pointer items-center gap-2">
+          <input type="checkbox" checked={selected.has("false")} onChange={() => toggle("false")} />
+          <span className="type-body-sm ui-text-primary">No</span>
+        </label>
+      </div>
+    );
+  }
+
+  return (
+    <Input
+      value={value}
+      placeholder={operator === "in" ? "value1, value2" : "Exact answer text"}
+      onChange={(e) => onChange(e.target.value)}
+      required
+    />
+  );
+}
+
+function formatConditionDisplay(
+  question: Question | undefined,
+  operator: string,
+  storedValue: string,
+): string {
+  const decoded = decodeConditionValue(operator, storedValue);
+  if (!question) return decoded;
+
+  if (question.type === "multi" || question.type === "dropdown") {
+    const map = new Map(question.choices.map((c) => [c.value, c.label]));
+    if (operator === "in") {
+      return decoded
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((v) => map.get(v) ?? v)
+        .join(", ");
+    }
+    return map.get(decoded) ?? decoded;
+  }
+
+  if (question.type === "yesno") {
+    const yn = (v: string) =>
+      v === "true" ? "Yes" : v === "false" ? "No" : v;
+    if (operator === "in") {
+      return decoded
+        .split(",")
+        .map((s) => s.trim())
+        .map((v) => yn(v))
+        .join(", ");
+    }
+    return yn(decoded);
+  }
+
+  return decoded;
+}
 
 type FormData = {
   id: string;
@@ -50,6 +236,7 @@ export function FormEditorWorkspace({
   form,
   questions,
   rules,
+  outcomeRules,
 }: {
   form: FormData;
   questions: Question[];
@@ -68,9 +255,31 @@ export function FormEditorWorkspace({
       order: number;
     };
   }>;
+  outcomeRules: Array<{
+    id: string;
+    name: string;
+    priority: number;
+    isActive: boolean;
+    matchType: string;
+    destinationType: string;
+    destinationValue: string;
+    segmentKey: string | null;
+    conditions: Array<{
+      id: string;
+      questionId: string;
+      operator: string;
+      value: string;
+      question: {
+        id: string;
+        title: string;
+        key: string;
+        order: number;
+      } | null;
+    }>;
+  }>;
 }) {
   const router = useRouter();
-  const [activePanel, setActivePanel] = useState<"settings" | "questions" | "logic" | "branding">(
+  const [activePanel, setActivePanel] = useState<"settings" | "questions" | "logic" | "routing" | "branding">(
     "settings",
   );
   const [questionEditorMode, setQuestionEditorMode] = useState<"edit" | "create">(
@@ -85,6 +294,18 @@ export function FormEditorWorkspace({
     null,
   );
   const [isPending, startTransition] = useTransition();
+  const [draggingOutcomeRuleId, setDraggingOutcomeRuleId] = useState<string | null>(null);
+  const [routingConditions, setRoutingConditions] = useState<
+    Array<{ questionId: string; operator: "equals" | "in"; value: string }>
+  >([{ questionId: "", operator: "equals", value: "" }]);
+  const [editingOutcomeRuleId, setEditingOutcomeRuleId] = useState<string | null>(null);
+  const [editingOutcomeRuleName, setEditingOutcomeRuleName] = useState("");
+  const [editingOutcomeMatchType, setEditingOutcomeMatchType] = useState<"all" | "any">("all");
+  const [editingOutcomeDestinationValue, setEditingOutcomeDestinationValue] = useState("");
+  const [editingOutcomeSegmentKey, setEditingOutcomeSegmentKey] = useState("");
+  const [editingRoutingConditions, setEditingRoutingConditions] = useState<
+    Array<{ questionId: string; operator: "equals" | "in"; value: string }>
+  >([{ questionId: "", operator: "equals", value: "" }]);
 
   const selectedQuestion = useMemo(
     () => questions.find((q) => q.id === selectedQuestionId) ?? null,
@@ -149,8 +370,76 @@ export function FormEditorWorkspace({
     });
   };
 
-  const handleCreateRule = async (formData: FormData) => {
+  const handleCreateRule = async (formData: globalThis.FormData) => {
     await createRule(form.id, formData);
+  };
+
+  const handleCreateOutcomeRule = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new window.FormData(e.currentTarget);
+    for (const condition of routingConditions) {
+      fd.append("conditionQuestionId", condition.questionId);
+      fd.append("conditionOperator", condition.operator);
+      fd.append("conditionValue", condition.value);
+    }
+    startTransition(async () => {
+      await createOutcomeRule(form.id, fd);
+      setRoutingConditions([{ questionId: "", operator: "equals", value: "" }]);
+      router.refresh();
+    });
+  };
+
+  const handleStartEditingOutcomeRule = (rule: (typeof outcomeRules)[number]) => {
+    setEditingOutcomeRuleId(rule.id);
+    setEditingOutcomeRuleName(rule.name);
+    setEditingOutcomeMatchType(rule.matchType === "any" ? "any" : "all");
+    setEditingOutcomeDestinationValue(rule.destinationValue);
+    setEditingOutcomeSegmentKey(rule.segmentKey || "");
+    setEditingRoutingConditions(
+      rule.conditions.length > 0
+        ? rule.conditions.map((condition) => ({
+            questionId: condition.questionId,
+            operator: condition.operator === "in" ? "in" : "equals",
+            value: decodeConditionValue(condition.operator, condition.value),
+          }))
+        : [{ questionId: "", operator: "equals", value: "" }],
+    );
+  };
+
+  const resetEditingOutcomeRule = () => {
+    setEditingOutcomeRuleId(null);
+    setEditingOutcomeRuleName("");
+    setEditingOutcomeMatchType("all");
+    setEditingOutcomeDestinationValue("");
+    setEditingOutcomeSegmentKey("");
+    setEditingRoutingConditions([{ questionId: "", operator: "equals", value: "" }]);
+  };
+
+  const handleUpdateOutcomeRule = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingOutcomeRuleId) return;
+
+    const fd = new window.FormData(e.currentTarget);
+    for (const condition of editingRoutingConditions) {
+      fd.append("conditionQuestionId", condition.questionId);
+      fd.append("conditionOperator", condition.operator);
+      fd.append("conditionValue", condition.value);
+    }
+
+    startTransition(async () => {
+      await updateOutcomeRule(form.id, editingOutcomeRuleId, fd);
+      resetEditingOutcomeRule();
+      router.refresh();
+    });
+  };
+
+  const handleDropOnOutcomeRule = (targetRule: (typeof outcomeRules)[number]) => {
+    if (!draggingOutcomeRuleId || draggingOutcomeRuleId === targetRule.id) return;
+    startTransition(async () => {
+      await reorderOutcomeRule(form.id, draggingOutcomeRuleId, targetRule.priority);
+      setDraggingOutcomeRuleId(null);
+      router.refresh();
+    });
   };
 
   const handleDropOnQuestion = (target: Question) => {
@@ -236,6 +525,17 @@ export function FormEditorWorkspace({
             }`}
           >
             Branding
+          </button>
+          <button
+            type="button"
+            onClick={() => setActivePanel("routing")}
+            className={`type-label-sm rounded-[5px] px-3 py-1 ${
+              activePanel === "routing"
+                ? "border border-[var(--border-subtle)] bg-[var(--bg-field)] ui-text-primary"
+                : "ui-text-muted"
+            }`}
+          >
+            Routing
           </button>
           <button
             type="button"
@@ -568,6 +868,381 @@ export function FormEditorWorkspace({
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+                </Card>
+              </div>
+            ) : activePanel === "routing" ? (
+              <div className="grid gap-4">
+                <Card className="p-4">
+                  <div className="type-label-sm mb-2 uppercase tracking-[0.12em] ui-text-tertiary">
+                    Add routing rule
+                  </div>
+                  <form onSubmit={handleCreateOutcomeRule} className="grid gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div className="flex flex-col gap-2">
+                        <label htmlFor="routing-name" className="type-body-sm ui-text-primary">Rule name</label>
+                        <Input id="routing-name" name="name" required />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label htmlFor="routing-matchType" className="type-body-sm ui-text-primary">Match type</label>
+                        <Select id="routing-matchType" name="matchType" defaultValue="all">
+                          <option value="all">All conditions must match</option>
+                          <option value="any">Any condition can match</option>
+                        </Select>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label htmlFor="routing-destination" className="type-body-sm ui-text-primary">Destination URL</label>
+                        <Input id="routing-destination" name="destinationValue" placeholder="/sales/example-page" required />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label htmlFor="routing-segment" className="type-body-sm ui-text-primary">Segment key (optional)</label>
+                        <Input id="routing-segment" name="segmentKey" placeholder="703_beginner_technique" />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3">
+                      <div className="type-label-sm uppercase tracking-[0.12em] ui-text-tertiary">Conditions</div>
+                      {routingConditions.map((condition, index) => (
+                        <div key={`condition-${index}`} className="grid grid-cols-1 gap-3 md:grid-cols-[2fr,1fr,2fr,auto]">
+                          <Select
+                            value={condition.questionId}
+                            onChange={(e) =>
+                              setRoutingConditions((prev) =>
+                                prev.map((row, rowIndex) =>
+                                  rowIndex === index
+                                    ? { ...row, questionId: e.target.value, value: "" }
+                                    : row,
+                                ),
+                              )
+                            }
+                            required
+                          >
+                            <option value="">Select question</option>
+                            {questions.map((question) => (
+                              <option key={question.id} value={question.id}>
+                                #{question.order + 1} - {question.title}
+                              </option>
+                            ))}
+                          </Select>
+                          <Select
+                            value={condition.operator}
+                            onChange={(e) =>
+                              setRoutingConditions((prev) =>
+                                prev.map((row, rowIndex) =>
+                                  rowIndex === index
+                                    ? { ...row, operator: e.target.value as "equals" | "in", value: "" }
+                                    : row,
+                                ),
+                              )
+                            }
+                          >
+                            <option value="equals">equals</option>
+                            <option value="in">any of (multi)</option>
+                          </Select>
+                          <RoutingConditionValueField
+                            question={questions.find((q) => q.id === condition.questionId)}
+                            operator={condition.operator}
+                            value={condition.value}
+                            onChange={(v) =>
+                              setRoutingConditions((prev) =>
+                                prev.map((row, rowIndex) =>
+                                  rowIndex === index ? { ...row, value: v } : row,
+                                ),
+                              )
+                            }
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setRoutingConditions((prev) =>
+                                prev.length === 1 ? prev : prev.filter((_, rowIndex) => rowIndex !== index),
+                              )
+                            }
+                            disabled={routingConditions.length === 1}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                      <div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setRoutingConditions((prev) => [
+                              ...prev,
+                              { questionId: "", operator: "equals", value: "" },
+                            ])
+                          }
+                        >
+                          Add condition
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Button type="submit" size="sm" disabled={isPending}>Create routing rule</Button>
+                    </div>
+                  </form>
+                </Card>
+
+                {editingOutcomeRuleId ? (
+                  <Card className="p-4">
+                    <div className="type-label-sm mb-2 uppercase tracking-[0.12em] ui-text-tertiary">
+                      Edit routing rule
+                    </div>
+                    <form onSubmit={handleUpdateOutcomeRule} className="grid gap-4">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="routing-edit-name" className="type-body-sm ui-text-primary">Rule name</label>
+                          <Input
+                            id="routing-edit-name"
+                            name="name"
+                            value={editingOutcomeRuleName}
+                            onChange={(e) => setEditingOutcomeRuleName(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="routing-edit-matchType" className="type-body-sm ui-text-primary">Match type</label>
+                          <Select
+                            id="routing-edit-matchType"
+                            name="matchType"
+                            value={editingOutcomeMatchType}
+                            onChange={(e) => setEditingOutcomeMatchType(e.target.value as "all" | "any")}
+                          >
+                            <option value="all">All conditions must match</option>
+                            <option value="any">Any condition can match</option>
+                          </Select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="routing-edit-destination" className="type-body-sm ui-text-primary">Destination URL</label>
+                          <Input
+                            id="routing-edit-destination"
+                            name="destinationValue"
+                            value={editingOutcomeDestinationValue}
+                            onChange={(e) => setEditingOutcomeDestinationValue(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="routing-edit-segment" className="type-body-sm ui-text-primary">Segment key (optional)</label>
+                          <Input
+                            id="routing-edit-segment"
+                            name="segmentKey"
+                            value={editingOutcomeSegmentKey}
+                            onChange={(e) => setEditingOutcomeSegmentKey(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-3">
+                        <div className="type-label-sm uppercase tracking-[0.12em] ui-text-tertiary">Conditions</div>
+                        {editingRoutingConditions.map((condition, index) => (
+                          <div key={`edit-condition-${index}`} className="grid grid-cols-1 gap-3 md:grid-cols-[2fr,1fr,2fr,auto]">
+                            <Select
+                              value={condition.questionId}
+                              onChange={(e) =>
+                                setEditingRoutingConditions((prev) =>
+                                  prev.map((row, rowIndex) =>
+                                    rowIndex === index
+                                      ? { ...row, questionId: e.target.value, value: "" }
+                                      : row,
+                                  ),
+                                )
+                              }
+                              required
+                            >
+                              <option value="">Select question</option>
+                              {questions.map((question) => (
+                                <option key={question.id} value={question.id}>
+                                  #{question.order + 1} - {question.title}
+                                </option>
+                              ))}
+                            </Select>
+                            <Select
+                              value={condition.operator}
+                              onChange={(e) =>
+                                setEditingRoutingConditions((prev) =>
+                                  prev.map((row, rowIndex) =>
+                                    rowIndex === index
+                                      ? { ...row, operator: e.target.value as "equals" | "in", value: "" }
+                                      : row,
+                                  ),
+                                )
+                              }
+                            >
+                              <option value="equals">equals</option>
+                              <option value="in">any of (multi)</option>
+                            </Select>
+                            <RoutingConditionValueField
+                              question={questions.find((q) => q.id === condition.questionId)}
+                              operator={condition.operator}
+                              value={condition.value}
+                              onChange={(v) =>
+                                setEditingRoutingConditions((prev) =>
+                                  prev.map((row, rowIndex) =>
+                                    rowIndex === index ? { ...row, value: v } : row,
+                                  ),
+                                )
+                              }
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setEditingRoutingConditions((prev) =>
+                                  prev.length === 1 ? prev : prev.filter((_, rowIndex) => rowIndex !== index),
+                                )
+                              }
+                              disabled={editingRoutingConditions.length === 1}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                        <div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setEditingRoutingConditions((prev) => [
+                                ...prev,
+                                { questionId: "", operator: "equals", value: "" },
+                              ])
+                            }
+                          >
+                            Add condition
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button type="submit" size="sm" disabled={isPending}>Save routing rule</Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={resetEditingOutcomeRule}
+                          disabled={isPending}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  </Card>
+                ) : null}
+
+                <Card className="p-4">
+                  <div className="type-label-sm mb-2 uppercase tracking-[0.12em] ui-text-tertiary">
+                    Existing routing rules
+                  </div>
+                  {outcomeRules.length === 0 ? (
+                    <p className="type-body-sm ui-text-secondary">No routing rules yet.</p>
+                  ) : (
+                    <div className="grid gap-3">
+                      {outcomeRules.map((rule) => (
+                        <div
+                          key={rule.id}
+                          draggable
+                          onDragStart={() => setDraggingOutcomeRuleId(rule.id)}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => handleDropOnOutcomeRule(rule)}
+                          className="ui-surface-field ui-border ui-radius-md flex items-start justify-between gap-3 p-3"
+                        >
+                          <div className="type-body-sm">
+                            <div className="ui-text-primary">
+                              <strong>{rule.name}</strong> {rule.isActive ? "(active)" : "(inactive)"}
+                            </div>
+                            <div className="ui-text-secondary">
+                              Match: {rule.matchType.toUpperCase()} | Destination: {rule.destinationValue}
+                            </div>
+                            {rule.segmentKey ? (
+                              <div className="ui-text-secondary">Segment: {rule.segmentKey}</div>
+                            ) : null}
+                            <div className="mt-1 grid gap-1">
+                              {rule.conditions.map((condition) => {
+                                const qForDisplay = questions.find((q) => q.id === condition.questionId);
+                                return (
+                                  <div key={condition.id} className="type-label-sm ui-text-tertiary">
+                                    {condition.question
+                                      ? `${condition.question.title} (${condition.question.key})`
+                                      : condition.questionId}{" "}
+                                    {condition.operator}{" "}
+                                    {formatConditionDisplay(qForDisplay, condition.operator, condition.value)}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleStartEditingOutcomeRule(rule)}
+                              disabled={isPending}
+                              title="Edit rule"
+                            >
+                              ✎
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                startTransition(async () => {
+                                  await duplicateOutcomeRule(form.id, rule.id);
+                                  router.refresh();
+                                })
+                              }
+                              disabled={isPending}
+                              title="Duplicate rule"
+                            >
+                              ⧉
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                startTransition(async () => {
+                                  await toggleOutcomeRule(form.id, rule.id, !rule.isActive);
+                                  router.refresh();
+                                })
+                              }
+                              disabled={isPending}
+                              title={rule.isActive ? "Disable rule" : "Enable rule"}
+                            >
+                              {rule.isActive ? "◉" : "◌"}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="text-[var(--danger-fg)]"
+                              onClick={() => {
+                                if (!confirm(`Delete routing rule "${rule.name}"?`)) return;
+                                startTransition(async () => {
+                                  await deleteOutcomeRule(form.id, rule.id);
+                                  router.refresh();
+                                });
+                              }}
+                              disabled={isPending}
+                              title="Delete rule"
+                            >
+                              🗑
+                            </Button>
+                            <span className="ui-text-tertiary px-1 py-1" title="Drag to reorder">⠿</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </Card>

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getForm } from "../actions";
 import { getQuestions } from "./questions/actions";
 import { getRules } from "./rules/actions";
+import { getOutcomeRules } from "./routing/actions";
 import { FormEditorWorkspace } from "./components/FormEditorWorkspace";
 
 export default async function EditFormPage({
@@ -15,6 +16,7 @@ export default async function EditFormPage({
 
   const questions = await getQuestions(id);
   const rules = await getRules(id);
+  const outcomeRules = await getOutcomeRules(id);
 
   return (
     <FormEditorWorkspace
@@ -65,6 +67,30 @@ export default async function EditFormPage({
           key: rule.sourceQuestion.key,
           order: rule.sourceQuestion.order,
         },
+      }))}
+      outcomeRules={outcomeRules.map((rule) => ({
+        id: rule.id,
+        name: rule.name,
+        priority: rule.priority,
+        isActive: rule.isActive,
+        matchType: rule.matchType,
+        destinationType: rule.destinationType,
+        destinationValue: rule.destinationValue,
+        segmentKey: rule.segmentKey,
+        conditions: rule.conditions.map((condition) => ({
+          id: condition.id,
+          questionId: condition.questionId,
+          operator: condition.operator,
+          value: condition.value,
+          question: condition.question
+            ? {
+                id: condition.question.id,
+                title: condition.question.title,
+                key: condition.question.key,
+                order: condition.question.order,
+              }
+            : null,
+        })),
       }))}
     />
   );

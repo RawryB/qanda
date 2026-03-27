@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import { renderTemplate } from "@/lib/qanda/template";
 import { answersToValueMap } from "@/lib/qanda/answers";
 import { fireZapierOnCompletion } from "@/lib/qanda/webhook";
+import {
+  persistResolvedOutcome,
+  resolveSubmissionOutcome,
+} from "@/lib/qanda/outcome-resolver";
 
 function validateAnswer(value: any, question: any): { valid: boolean; error?: string } {
   if (question.type === "instruction") {
@@ -57,6 +61,29 @@ export async function POST(request: Request) {
     if (submission.status !== "in_progress") {
       return NextResponse.json({ error: "Submission is already completed" }, { status: 400 });
     }
+
+    const buildCompletionResponse = async () => {
+      const outcome = await resolveSubmissionOutcome(submissionId);
+      await persistResolvedOutcome(submissionId, outcome);
+
+      const matchedRedirect =
+        outcome.matched && outcome.destinationType === "redirect_url"
+          ? outcome.destinationValue
+          : null;
+
+      return {
+        completed: true,
+        redirectUrl: matchedRedirect || submission.form.redirectUrl || null,
+        routing: {
+          matched: outcome.matched,
+          outcomeRuleId: outcome.outcomeRuleId,
+          outcomeRuleName: outcome.outcomeRuleName,
+          destinationType: outcome.destinationType,
+          destinationValue: outcome.destinationValue,
+          segmentKey: outcome.segmentKey,
+        },
+      };
+    };
 
     const question = await prisma.qandaQuestion.findUnique({
       where: { id: questionId },
@@ -189,14 +216,7 @@ export async function POST(request: Request) {
           });
           await fireZapierOnCompletion(submissionId);
         }
-        const completedSubmission = await prisma.qandaSubmission.findUnique({
-          where: { id: submissionId },
-          include: { form: true },
-        });
-        return NextResponse.json({
-          completed: true,
-          redirectUrl: completedSubmission?.form.redirectUrl || null,
-        });
+        return NextResponse.json(await buildCompletionResponse());
       } else if (matchedRule.destinationQuestionId) {
         const destinationQuestion = await prisma.qandaQuestion.findUnique({
           where: { id: matchedRule.destinationQuestionId },
@@ -279,14 +299,7 @@ export async function POST(request: Request) {
       });
       await fireZapierOnCompletion(submissionId);
     }
-    const completedSubmission = await prisma.qandaSubmission.findUnique({
-      where: { id: submissionId },
-      include: { form: true },
-    });
-    return NextResponse.json({
-      completed: true,
-      redirectUrl: completedSubmission?.form.redirectUrl || null,
-    });
+    return NextResponse.json(await buildCompletionResponse());
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Failed to save answer" }, { status: 500 });
   }
