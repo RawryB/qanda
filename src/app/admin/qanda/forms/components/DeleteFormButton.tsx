@@ -5,6 +5,11 @@ import { deleteForm } from "../actions";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 export function DeleteFormButton({
   formId,
   formName,
@@ -26,8 +31,8 @@ export function DeleteFormButton({
     try {
       await deleteForm(formId);
       router.refresh();
-    } catch (error: any) {
-      alert(error.message || "Failed to delete form");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to delete form"));
       setIsDeleting(false);
       setShowConfirm(false);
     }

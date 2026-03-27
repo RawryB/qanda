@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { deleteQuestion, moveQuestion } from "../actions";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 export function MoveQuestionButton({
   formId,
   questionId,
@@ -24,8 +29,8 @@ export function MoveQuestionButton({
     try {
       await moveQuestion(formId, questionId, direction);
       router.refresh();
-    } catch (error: any) {
-      alert(error.message || "Failed to move question");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to move question"));
       setIsMoving(false);
     }
   };
@@ -57,8 +62,8 @@ export function DeleteQuestionButton({
     try {
       await deleteQuestion(questionId);
       router.refresh();
-    } catch (error: any) {
-      alert(error.message || "Failed to delete question");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to delete question"));
       setIsDeleting(false);
       setShowConfirm(false);
     }
@@ -67,7 +72,7 @@ export function DeleteQuestionButton({
   if (showConfirm) {
     return (
       <div className="flex items-center gap-2">
-        <span className="type-meta-sm ui-text-secondary">Delete "{questionTitle}"?</span>
+        <span className="type-meta-sm ui-text-secondary">Delete &quot;{questionTitle}&quot;?</span>
         <Button onClick={handleDelete} disabled={isDeleting} className="bg-[var(--danger-fg)] text-[var(--bg-app)]">
           {isDeleting ? "Deleting..." : "Confirm"}
         </Button>

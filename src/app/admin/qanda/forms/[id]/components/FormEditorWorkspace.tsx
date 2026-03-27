@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Card, Input, Select } from "@/components/ui";
@@ -289,7 +289,9 @@ export function FormEditorWorkspace({
     questions[0]?.id ?? null,
   );
   const [createQuestionType, setCreateQuestionType] = useState("text");
-  const [editQuestionType, setEditQuestionType] = useState<string>("text");
+  const [editQuestionType, setEditQuestionType] = useState<string>(
+    questions[0]?.type ?? "text",
+  );
   const [draggingQuestionId, setDraggingQuestionId] = useState<string | null>(
     null,
   );
@@ -311,12 +313,6 @@ export function FormEditorWorkspace({
     () => questions.find((q) => q.id === selectedQuestionId) ?? null,
     [questions, selectedQuestionId],
   );
-
-  useEffect(() => {
-    if (selectedQuestion) {
-      setEditQuestionType(selectedQuestion.type);
-    }
-  }, [selectedQuestion?.id, selectedQuestion?.type]);
 
   const questionTypes = [
     { value: "text", label: "Text", icon: "T" },

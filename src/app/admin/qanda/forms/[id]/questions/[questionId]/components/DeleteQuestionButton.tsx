@@ -4,6 +4,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { deleteQuestion } from "../../actions";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 export function DeleteQuestionButton({
   questionId,
   formId,
@@ -18,8 +23,8 @@ export function DeleteQuestionButton({
     try {
       await deleteQuestion(questionId);
       router.push(`/admin/qanda/forms/${formId}`);
-    } catch (error: any) {
-      alert(error.message || "Failed to delete question");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to delete question"));
     }
   }
 

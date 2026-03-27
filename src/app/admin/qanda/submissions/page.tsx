@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Badge, Button, Card } from "@/components/ui";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getForms } from "../forms/actions";
 import { FormFilter } from "./components/FormFilter";
@@ -23,7 +24,7 @@ export default async function QandaSubmissionsPage({
   const formIdFilter = params.formId;
   const forms = await getForms();
 
-  const where: any = {};
+  const where: Prisma.QandaSubmissionWhereInput = {};
   if (formIdFilter) where.formId = formIdFilter;
 
   const submissions = await prisma.qandaSubmission.findMany({

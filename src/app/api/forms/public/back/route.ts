@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { renderTemplate } from "@/lib/qanda/template";
 import { answersToValueMap } from "@/lib/qanda/answers";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 export async function POST(request: Request) {
   try {
     const { submissionId } = await request.json();
@@ -84,7 +89,7 @@ export async function POST(request: Request) {
     const renderedTitle = renderTemplate(question.title, values);
     const renderedHelpText = renderTemplate(question.helpText, values);
 
-    let existingAnswerValue: any = null;
+    let existingAnswerValue: unknown = null;
     if (existingAnswer) {
       if (existingAnswer.valueText !== null && existingAnswer.valueText !== undefined) {
         existingAnswerValue = existingAnswer.valueText;
@@ -115,8 +120,8 @@ export async function POST(request: Request) {
           ? { valueText: existingAnswer?.valueText || null, valueJson: existingAnswer?.valueJson || null }
           : null,
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to go back" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: getErrorMessage(error, "Failed to go back") }, { status: 500 });
   }
 }
 

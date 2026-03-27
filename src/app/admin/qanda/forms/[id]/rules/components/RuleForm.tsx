@@ -15,6 +15,11 @@ type Question = {
 
 const LOGIC_SOURCE_TYPES = new Set(["multi", "dropdown", "yesno"]);
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 function getLogicSourceQuestions(questions: Question[], initialSourceId?: string) {
   const filtered = questions.filter((q) => LOGIC_SOURCE_TYPES.has(q.type));
   if (initialSourceId) {
@@ -157,8 +162,8 @@ export function RuleForm({
     try {
       await action(formData);
       router.refresh();
-    } catch (error: any) {
-      alert(error.message || "Failed to save rule");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to save rule"));
       setIsSubmitting(false);
     }
   }

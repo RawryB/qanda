@@ -17,6 +17,19 @@ type Question = {
 };
 
 type FormState = "loading" | "start" | "question" | "completed";
+type RunnerCssVars = React.CSSProperties & {
+  "--accent": string;
+  "--accent-contrast": string;
+  "--runner-text-primary": string;
+  "--runner-text-muted": string;
+  "--runner-font-primary": string;
+  "--runner-font-secondary": string;
+};
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
 
 function getLuminance(hex: string) {
   const clean = hex.replace("#", "");
@@ -182,8 +195,8 @@ export default function FormsRunnerPage() {
       setCurrentQuestion(data.question);
       setStepIndex(data.stepIndex ?? 0);
       setState("question");
-    } catch (err: any) {
-      setError(err.message || "Failed to start form");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to start form"));
     } finally {
       setIsSubmitting(false);
     }
@@ -214,8 +227,8 @@ export default function FormsRunnerPage() {
         if (data.totalQuestions) setTotalQuestions(data.totalQuestions);
         setAnswer("");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to save answer");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to save answer"));
     } finally {
       setIsSubmitting(false);
     }
@@ -249,8 +262,8 @@ export default function FormsRunnerPage() {
       } else {
         setAnswer("");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to go back");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to go back"));
     } finally {
       setIsSubmitting(false);
     }
@@ -355,7 +368,7 @@ export default function FormsRunnerPage() {
     return null;
   };
 
-  const shellStyle: React.CSSProperties = {
+  const shellStyle: RunnerCssVars = {
     minHeight: "100vh",
     background: transitionColor
       ? `linear-gradient(135deg, ${primaryColor} 0%, ${transitionColor} 100%)`
@@ -363,12 +376,12 @@ export default function FormsRunnerPage() {
     ...(backgroundImageUrl
       ? { backgroundImage: `url(${backgroundImageUrl})`, backgroundSize: "cover", backgroundPosition: "center center" }
       : {}),
-    ["--accent" as any]: accentColor,
-    ["--accent-contrast" as any]: accentContrast,
-    ["--runner-text-primary" as any]: textPrimary,
-    ["--runner-text-muted" as any]: textMuted,
-    ["--runner-font-primary" as any]: `'${resolvedPrimaryFont}', var(--font-syne), sans-serif`,
-    ["--runner-font-secondary" as any]: `'${resolvedSecondaryFont}', var(--font-dm-sans), sans-serif`,
+    "--accent": accentColor,
+    "--accent-contrast": accentContrast,
+    "--runner-text-primary": textPrimary,
+    "--runner-text-muted": textMuted,
+    "--runner-font-primary": `'${resolvedPrimaryFont}', var(--font-syne), sans-serif`,
+    "--runner-font-secondary": `'${resolvedSecondaryFont}', var(--font-dm-sans), sans-serif`,
   };
 
   if (state === "loading") {

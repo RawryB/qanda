@@ -4,12 +4,20 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button, Input, Select } from "@/components/ui";
 
+type EditableQuestion = {
+  type: string;
+  key: string;
+  title: string;
+  helpText: string | null;
+  required: boolean;
+};
+
 export function QuestionEditForm({
   question,
   formId,
   action,
 }: {
-  question: any;
+  question: EditableQuestion;
   formId: string;
   action: (formData: FormData) => Promise<void>;
 }) {

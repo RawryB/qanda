@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 /**
  * Fires a webhook to Zapier when a submission is completed.
  * Best-effort: does not throw errors that would break the caller.
@@ -56,10 +61,10 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
     const zapierHookUrl = submission.form.zapierHookUrl;
 
     // Build payload
-    const values: Record<string, any> = {};
+    const values: Record<string, string | number | boolean> = {};
     const answers = submission.answers.map((answer) => {
       // Determine value for answer
-      let value: any = null;
+      let value: string | number | boolean | null = null;
       if (answer.valueText !== null && answer.valueText !== undefined) {
         value = answer.valueText;
       } else if (answer.valueJson !== null && answer.valueJson !== undefined) {
@@ -114,8 +119,6 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
     const timeoutMs = 20000; // 20 seconds (Zapier can be slow in production)
 
     let lastError: Error | null = null;
-    let lastStatusCode: number | null = null;
-
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         // Wait for backoff delay (except first attempt)
@@ -138,8 +141,6 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
           });
 
           clearTimeout(timeoutId);
-          lastStatusCode = response.status;
-
           // Log attempt
           await prisma.qandaWebhookAttempt.create({
             data: {
@@ -157,14 +158,14 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
           if (response.status >= 200 && response.status < 300) {
             return; // Success, exit function
           }
-        } catch (fetchError: any) {
+        } catch (fetchError: unknown) {
           clearTimeout(timeoutId);
 
           // Handle abort (timeout)
-          if (fetchError.name === "AbortError") {
+          if (fetchError instanceof Error && fetchError.name === "AbortError") {
             lastError = new Error(`Request timeout after ${Math.round(timeoutMs / 1000)} seconds`);
           } else {
-            lastError = fetchError;
+            lastError = new Error(getErrorMessage(fetchError, "Unknown error"));
           }
 
           // Log attempt with error
@@ -180,7 +181,7 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
             },
           });
         }
-      } catch (logError: any) {
+      } catch (logError: unknown) {
         // If logging fails, continue to next attempt
         console.error("Failed to log webhook attempt:", logError);
       }
@@ -191,7 +192,7 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
       `Webhook failed after ${maxAttempts} attempts for submission ${submissionId}`,
       lastError
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Catch-all: don't throw errors that would break the caller
     console.error("Error in fireZapierOnCompletion:", error);
   }

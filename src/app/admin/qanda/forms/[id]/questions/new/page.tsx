@@ -12,17 +12,13 @@ export default async function NewQuestionPage({
 
   async function handleCreate(formData: FormData) {
     "use server";
-    try {
-      const questionId = await createQuestion(id, formData);
-      const type = formData.get("type") as string;
+    const questionId = await createQuestion(id, formData);
+    const type = formData.get("type") as string;
 
-      if (type === "multi" || type === "dropdown") {
-        redirect(`/admin/qanda/forms/${id}/questions/${questionId}`);
-      } else {
-        redirect(`/admin/qanda/forms/${id}`);
-      }
-    } catch (error: any) {
-      throw error;
+    if (type === "multi" || type === "dropdown") {
+      redirect(`/admin/qanda/forms/${id}/questions/${questionId}`);
+    } else {
+      redirect(`/admin/qanda/forms/${id}`);
     }
   }
 

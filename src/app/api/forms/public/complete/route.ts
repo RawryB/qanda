@@ -6,6 +6,11 @@ import {
   resolveSubmissionOutcome,
 } from "@/lib/qanda/outcome-resolver";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 export async function POST(request: Request) {
   try {
     const { submissionId } = await request.json();
@@ -57,8 +62,8 @@ export async function POST(request: Request) {
         segmentKey: outcome.segmentKey,
       },
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to complete submission" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: getErrorMessage(error, "Failed to complete submission") }, { status: 500 });
   }
 }
 

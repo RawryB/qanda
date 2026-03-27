@@ -4,6 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+function getPrismaErrorCode(error: unknown): string | undefined {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const code = (error as { code?: unknown }).code;
+    if (typeof code === "string") return code;
+  }
+  return undefined;
+}
+
 export async function createForm(formData: FormData) {
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
@@ -92,8 +100,8 @@ export async function createForm(formData: FormData) {
 
     revalidatePath("/admin/qanda/forms");
     redirect(`/admin/qanda/forms/${form.id}`);
-  } catch (error: any) {
-    if (error.code === "P2002") {
+  } catch (error: unknown) {
+    if (getPrismaErrorCode(error) === "P2002") {
       throw new Error("A form with this slug already exists");
     }
     throw error;
@@ -208,8 +216,8 @@ export async function updateForm(id: string, formData: FormData) {
 
     revalidatePath("/admin/qanda/forms");
     revalidatePath(`/admin/qanda/forms/${id}`);
-  } catch (error: any) {
-    if (error.code === "P2002") {
+  } catch (error: unknown) {
+    if (getPrismaErrorCode(error) === "P2002") {
       throw new Error("A form with this slug already exists");
     }
     throw error;
@@ -223,8 +231,8 @@ export async function deleteForm(id: string) {
     });
 
     revalidatePath("/admin/qanda/forms");
-  } catch (error: any) {
-    if (error.code === "P2025") {
+  } catch (error: unknown) {
+    if (getPrismaErrorCode(error) === "P2025") {
       throw new Error("Form not found");
     }
     throw error;

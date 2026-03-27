@@ -12,7 +12,7 @@ export function answersToValueMap(
   answers: Array<{
     question: { key: string };
     valueText: string | null;
-    valueJson: any;
+    valueJson: unknown;
   }>
 ): Record<string, string> {
   const map: Record<string, string> = {};

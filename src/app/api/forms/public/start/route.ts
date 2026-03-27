@@ -3,6 +3,11 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { renderTemplate } from "@/lib/qanda/template";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 export async function POST(request: Request) {
   try {
     const { slug, preview } = await request.json();
@@ -99,8 +104,8 @@ export async function POST(request: Request) {
         logoUrl: form.logoUrl,
       },
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to start form" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: getErrorMessage(error, "Failed to start form") }, { status: 500 });
   }
 }
 

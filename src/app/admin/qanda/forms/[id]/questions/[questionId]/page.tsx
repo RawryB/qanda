@@ -17,11 +17,7 @@ export default async function EditQuestionPage({
 
   async function handleUpdate(formData: FormData) {
     "use server";
-    try {
-      await updateQuestion(questionId, formData);
-    } catch (error: any) {
-      throw error;
-    }
+    await updateQuestion(questionId, formData);
   }
 
   return (

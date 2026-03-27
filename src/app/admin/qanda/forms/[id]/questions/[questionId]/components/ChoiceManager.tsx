@@ -1,22 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Input } from "@/components/ui";
 import { createChoice, deleteChoice, reorderChoice, updateChoice } from "../../actions";
 
 type Choice = { id: string; order: number; value: string; label: string };
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 export function ChoiceManager({ questionId, choices: initialChoices }: { questionId: string; choices: Choice[] }) {
   const router = useRouter();
-  const [choices, setChoices] = useState(initialChoices);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draggingChoiceId, setDraggingChoiceId] = useState<string | null>(null);
   const [newValue, setNewValue] = useState("");
   const [newLabel, setNewLabel] = useState("");
-
-  useEffect(() => setChoices(initialChoices), [initialChoices]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,8 +31,8 @@ export function ChoiceManager({ questionId, choices: initialChoices }: { questio
       setNewLabel("");
       setShowAddForm(false);
       router.refresh();
-    } catch (error: any) {
-      alert(error.message || "Failed to create choice");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to create choice"));
     }
   };
 
@@ -42,8 +44,8 @@ export function ChoiceManager({ questionId, choices: initialChoices }: { questio
       await updateChoice(choiceId, formData);
       setEditingId(null);
       router.refresh();
-    } catch (error: any) {
-      alert(error.message || "Failed to update choice");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to update choice"));
     }
   };
 
@@ -52,8 +54,8 @@ export function ChoiceManager({ questionId, choices: initialChoices }: { questio
     try {
       await deleteChoice(choiceId);
       router.refresh();
-    } catch (error: any) {
-      alert(error.message || "Failed to delete choice");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to delete choice"));
     }
   };
 
@@ -63,8 +65,8 @@ export function ChoiceManager({ questionId, choices: initialChoices }: { questio
       await reorderChoice(questionId, draggingChoiceId, targetChoice.order);
       setDraggingChoiceId(null);
       router.refresh();
-    } catch (error: any) {
-      alert(error.message || "Failed to reorder choice");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to reorder choice"));
     }
   };
 
@@ -100,11 +102,11 @@ export function ChoiceManager({ questionId, choices: initialChoices }: { questio
         </Card>
       )}
 
-      {choices.length === 0 ? (
+      {initialChoices.length === 0 ? (
         <p className="type-body-md ui-text-secondary">No choices yet. Add your first choice above.</p>
       ) : (
         <div className="flex flex-col gap-4">
-          {choices.map((choice, index) => (
+          {initialChoices.map((choice) => (
             <Card
               key={choice.id}
               className="p-4"

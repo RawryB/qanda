@@ -8,7 +8,18 @@ import {
   resolveSubmissionOutcome,
 } from "@/lib/qanda/outcome-resolver";
 
-function validateAnswer(value: any, question: any): { valid: boolean; error?: string } {
+type AnswerValidationQuestion = {
+  type: string;
+  required: boolean;
+  choices?: Array<{ value: string }>;
+};
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
+function validateAnswer(value: unknown, question: AnswerValidationQuestion): { valid: boolean; error?: string } {
   if (question.type === "instruction") {
     return { valid: true };
   }
@@ -20,11 +31,13 @@ function validateAnswer(value: any, question: any): { valid: boolean; error?: st
   }
   switch (question.type) {
     case "email": {
+      if (typeof value !== "string") return { valid: false, error: "Please enter a valid email address" };
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(value)) return { valid: false, error: "Please enter a valid email address" };
       break;
     }
     case "phone": {
+      if (typeof value !== "string") return { valid: false, error: "Please enter a valid phone number" };
       const phoneRegex = /^[\d\s\-\+\(\)]+$/;
       if (!phoneRegex.test(value)) return { valid: false, error: "Please enter a valid phone number" };
       break;
@@ -36,9 +49,10 @@ function validateAnswer(value: any, question: any): { valid: boolean; error?: st
       break;
     case "multi":
     case "dropdown": {
+      if (typeof value !== "string") return { valid: false, error: "Please select a valid option" };
       const choices = question.choices || [];
       if (choices.length === 0) return { valid: false, error: "No choices configured for this question." };
-      const validValues = choices.map((c: any) => c.value);
+      const validValues = choices.map((c) => c.value);
       if (!validValues.includes(value)) return { valid: false, error: "Please select a valid option" };
       break;
     }
@@ -102,7 +116,12 @@ export async function POST(request: Request) {
         where: { submissionId_questionId: { submissionId, questionId } },
       });
 
-      const answerData: any = { submissionId, questionId };
+      const answerData: {
+        submissionId: string;
+        questionId: string;
+        valueText?: string | null;
+        valueJson?: boolean;
+      } = { submissionId, questionId };
       if (question.type === "yesno") {
         const boolValue = value === "yes" || value === true;
         answerData.valueJson = boolValue;
@@ -161,18 +180,18 @@ export async function POST(request: Request) {
     });
 
     let answerValue = "";
-    let answerValueJson: any = null;
+    let answerValueJson: boolean | null = null;
     if (question.type !== "instruction") {
       if (question.type === "yesno") {
         const boolValue = value === "yes" || value === true;
         answerValueJson = boolValue;
         answerValue = boolValue ? "true" : "false";
       } else {
-        answerValue = value || "";
+        answerValue = typeof value === "string" ? value : "";
       }
     }
 
-    let matchedRule = null as any;
+    let matchedRule: (typeof rules)[number] | null = null;
     for (const rule of rules) {
       let matches = false;
       switch (rule.operator) {
@@ -300,8 +319,8 @@ export async function POST(request: Request) {
       await fireZapierOnCompletion(submissionId);
     }
     return NextResponse.json(await buildCompletionResponse());
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to save answer" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: getErrorMessage(error, "Failed to save answer") }, { status: 500 });
   }
 }
 

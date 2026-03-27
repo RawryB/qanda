@@ -5,6 +5,14 @@ import { revalidatePath } from "next/cache";
 
 const QUESTION_TYPES = ["text", "email", "phone", "yesno", "multi", "dropdown", "instruction"];
 
+function getPrismaErrorCode(error: unknown): string | undefined {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const code = (error as { code?: unknown }).code;
+    if (typeof code === "string") return code;
+  }
+  return undefined;
+}
+
 export async function createQuestion(formId: string, formData: FormData) {
   const type = formData.get("type") as string;
   const key = formData.get("key") as string;
@@ -46,8 +54,8 @@ export async function createQuestion(formId: string, formData: FormData) {
 
     revalidatePath(`/admin/qanda/forms/${formId}`);
     return question.id; // Return question ID for redirect
-  } catch (error: any) {
-    if (error.code === "P2002") {
+  } catch (error: unknown) {
+    if (getPrismaErrorCode(error) === "P2002") {
       throw new Error("A question with this key already exists in this form");
     }
     throw error;
@@ -96,11 +104,11 @@ export async function updateQuestion(questionId: string, formData: FormData) {
 
     revalidatePath(`/admin/qanda/forms/${question.formId}`);
     revalidatePath(`/admin/qanda/forms/${question.formId}/questions/${questionId}`);
-  } catch (error: any) {
-    if (error.code === "P2002") {
+  } catch (error: unknown) {
+    if (getPrismaErrorCode(error) === "P2002") {
       throw new Error("A question with this key already exists in this form");
     }
-    if (error.code === "P2025") {
+    if (getPrismaErrorCode(error) === "P2025") {
       throw new Error("Question not found");
     }
     throw error;
@@ -123,8 +131,8 @@ export async function deleteQuestion(questionId: string) {
     });
 
     revalidatePath(`/admin/qanda/forms/${question.formId}`);
-  } catch (error: any) {
-    if (error.code === "P2025") {
+  } catch (error: unknown) {
+    if (getPrismaErrorCode(error) === "P2025") {
       throw new Error("Question not found");
     }
     throw error;
@@ -294,8 +302,8 @@ export async function createChoice(questionId: string, formData: FormData) {
     });
 
     revalidatePath(`/admin/qanda/forms/${question.formId}/questions/${questionId}`);
-  } catch (error: any) {
-    if (error.code === "P2002") {
+  } catch (error: unknown) {
+    if (getPrismaErrorCode(error) === "P2002") {
       throw new Error("A choice with this value already exists for this question");
     }
     throw error;
@@ -335,11 +343,11 @@ export async function updateChoice(choiceId: string, formData: FormData) {
     revalidatePath(
       `/admin/qanda/forms/${choice.question.formId}/questions/${choice.questionId}`
     );
-  } catch (error: any) {
-    if (error.code === "P2002") {
+  } catch (error: unknown) {
+    if (getPrismaErrorCode(error) === "P2002") {
       throw new Error("A choice with this value already exists for this question");
     }
-    if (error.code === "P2025") {
+    if (getPrismaErrorCode(error) === "P2025") {
       throw new Error("Choice not found");
     }
     throw error;
@@ -368,8 +376,8 @@ export async function deleteChoice(choiceId: string) {
     revalidatePath(
       `/admin/qanda/forms/${choice.question.formId}/questions/${choice.questionId}`
     );
-  } catch (error: any) {
-    if (error.code === "P2025") {
+  } catch (error: unknown) {
+    if (getPrismaErrorCode(error) === "P2025") {
       throw new Error("Choice not found");
     }
     throw error;

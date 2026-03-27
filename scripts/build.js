@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { execSync } = require("child_process");
 
 // Prisma schema requires QANDA_DATABASE_URL at generate time. Use a placeholder

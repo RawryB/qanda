@@ -2,6 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -56,8 +61,8 @@ export async function GET(request: Request) {
       secondaryFont: form.secondaryFont,
       logoUrl: form.logoUrl,
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to fetch form" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: getErrorMessage(error, "Failed to fetch form") }, { status: 500 });
   }
 }
 

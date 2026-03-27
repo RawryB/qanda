@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { deleteRule, moveRule } from "../actions";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 export function MoveRuleButton({
   formId,
   ruleId,
@@ -24,8 +29,8 @@ export function MoveRuleButton({
     try {
       await moveRule(formId, ruleId, direction);
       router.refresh();
-    } catch (error: any) {
-      alert(error.message || "Failed to move rule");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to move rule"));
       setIsMoving(false);
     }
   };
@@ -58,8 +63,8 @@ export function DeleteRuleButton({
     try {
       await deleteRule(ruleId, formId);
       router.refresh();
-    } catch (error: any) {
-      alert(error.message || "Failed to delete rule");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to delete rule"));
       setIsDeleting(false);
       setShowConfirm(false);
     }

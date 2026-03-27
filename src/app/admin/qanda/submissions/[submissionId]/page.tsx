@@ -13,7 +13,7 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-function formatAnswerValue(answer: any): string {
+function formatAnswerValue(answer: { valueText: string | null; valueJson: unknown }): string {
   if (answer.valueText) return answer.valueText;
   if (answer.valueJson !== null && answer.valueJson !== undefined) return JSON.stringify(answer.valueJson);
   return "(no answer)";
