@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Button, Input, Select } from "@/components/ui";
+import { Button } from "@/components/ui";
 
 type Question = {
   id: string;
@@ -18,14 +18,29 @@ type Question = {
 
 type FormState = "loading" | "start" | "question" | "completed";
 
-function isLightColor(hex: string) {
+function getLuminance(hex: string) {
   const clean = hex.replace("#", "");
-  if (!/^[0-9A-Fa-f]{6}$/.test(clean)) return false;
+  if (!/^[0-9A-Fa-f]{6}$/.test(clean)) return 0;
   const r = parseInt(clean.slice(0, 2), 16);
   const g = parseInt(clean.slice(2, 4), 16);
   const b = parseInt(clean.slice(4, 6), 16);
-  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-  return luminance > 0.6;
+  const toLinear = (channel: number) => {
+    const s = channel / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  const R = toLinear(r);
+  const G = toLinear(g);
+  const B = toLinear(b);
+  return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const clean = hex.replace("#", "");
+  if (!/^[0-9A-Fa-f]{6}$/.test(clean)) return `rgba(0,0,0,${alpha})`;
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 const GOOGLE_FONT_OPTIONS = new Set([
@@ -78,10 +93,17 @@ export default function FormsRunnerPage() {
   const resolvedCompletionTitle = completionTitle || "Done";
   const resolvedCompletionMessage = completionMessage || "Thank you for your submission!";
 
-  const accentContrast = useMemo(
-    () => (isLightColor(accentColor) ? "#0D0D0D" : "#F5F2ED"),
-    [accentColor],
-  );
+  const primaryLuminance = useMemo(() => getLuminance(primaryColor), [primaryColor]);
+  const accentLuminance = useMemo(() => getLuminance(accentColor), [accentColor]);
+  const isLightPrimary = primaryLuminance > 0.35;
+  const textPrimary = isLightPrimary ? "#1A1209" : "#F5F2ED";
+  const textMuted = isLightPrimary ? "rgba(26,18,9,0.5)" : "rgba(245,242,237,0.55)";
+  const progressTrack = isLightPrimary ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)";
+  const neutralChoiceBg = isLightPrimary ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.06)";
+  const neutralChoiceBorder = isLightPrimary ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.2)";
+  const selectedChoiceBg = hexToRgba(accentColor, isLightPrimary ? 0.12 : 0.15);
+  const backButtonColor = isLightPrimary ? "rgba(26,18,9,0.35)" : "rgba(245,242,237,0.35)";
+  const accentContrast = accentLuminance > 0.45 ? "#1A1209" : "#F5F2ED";
 
   useEffect(() => {
     const fetchFormName = async () => {
@@ -238,11 +260,18 @@ export default function FormsRunnerPage() {
 
     if (currentQuestion.type === "text" || currentQuestion.type === "email" || currentQuestion.type === "phone") {
       return (
-        <Input
+        <input
           type={currentQuestion.type === "email" ? "email" : currentQuestion.type === "phone" ? "tel" : "text"}
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           required={currentQuestion.required}
+          className="w-full rounded-[8px] border px-4 py-3 text-[14px] outline-none"
+          style={{
+            background: neutralChoiceBg,
+            borderColor: neutralChoiceBorder,
+            color: textPrimary,
+            fontFamily: "var(--runner-font-secondary)",
+          }}
         />
       );
     }
@@ -260,8 +289,18 @@ export default function FormsRunnerPage() {
           {options.map((option) => (
             <label
               key={option.value}
-              className="ui-surface-field ui-border ui-radius-md flex cursor-pointer items-center gap-2 px-4 py-3"
-              style={answer === option.value ? { borderColor: "var(--accent)" } : undefined}
+              className="flex cursor-pointer items-center gap-2 rounded-[8px] border px-4 py-3"
+              style={
+                answer === option.value
+                  ? {
+                      background: selectedChoiceBg,
+                      borderColor: accentColor,
+                    }
+                  : {
+                      background: neutralChoiceBg,
+                      borderColor: neutralChoiceBorder,
+                    }
+              }
             >
               <input
                 type="radio"
@@ -270,8 +309,15 @@ export default function FormsRunnerPage() {
                 checked={answer === option.value}
                 onChange={(e) => setAnswer(e.target.value)}
                 required={currentQuestion.required}
+                style={{ accentColor }}
               />
-              <span className="type-body-md" style={{ fontFamily: "var(--runner-font-secondary)" }}>
+              <span
+                className="type-body-md"
+                style={{
+                  fontFamily: "var(--runner-font-secondary)",
+                  color: answer === option.value ? textPrimary : textMuted,
+                }}
+              >
                 {option.label}
               </span>
             </label>
@@ -282,14 +328,25 @@ export default function FormsRunnerPage() {
 
     if (currentQuestion.type === "dropdown") {
       return (
-        <Select value={answer} onChange={(e) => setAnswer(e.target.value)} required={currentQuestion.required}>
+        <select
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          required={currentQuestion.required}
+          className="w-full rounded-[8px] border px-4 py-3 text-[14px] outline-none"
+          style={{
+            background: neutralChoiceBg,
+            borderColor: neutralChoiceBorder,
+            color: textPrimary,
+            fontFamily: "var(--runner-font-secondary)",
+          }}
+        >
           <option value="">Select an option...</option>
           {currentQuestion.choices?.map((choice) => (
             <option key={choice.value} value={choice.value}>
               {choice.label}
             </option>
           ))}
-        </Select>
+        </select>
       );
     }
 
@@ -302,42 +359,68 @@ export default function FormsRunnerPage() {
       ? `linear-gradient(135deg, ${primaryColor} 0%, ${transitionColor} 100%)`
       : primaryColor,
     ...(backgroundImageUrl
-      ? { backgroundImage: `url(${backgroundImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+      ? { backgroundImage: `url(${backgroundImageUrl})`, backgroundSize: "cover", backgroundPosition: "center center" }
       : {}),
     ["--accent" as any]: accentColor,
     ["--accent-contrast" as any]: accentContrast,
+    ["--runner-text-primary" as any]: textPrimary,
+    ["--runner-text-muted" as any]: textMuted,
     ["--runner-font-primary" as any]: `'${resolvedPrimaryFont}', var(--font-syne), sans-serif`,
     ["--runner-font-secondary" as any]: `'${resolvedSecondaryFont}', var(--font-dm-sans), sans-serif`,
   };
 
   if (state === "loading") {
     return (
-      <div style={shellStyle} className="flex min-h-screen items-center justify-center">
-        <p className="type-body-md">Loading...</p>
+      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center overflow-hidden">
+        {backgroundImageUrl && (
+          <>
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage: `url(${backgroundImageUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center center",
+                filter: "blur(4px)",
+                transform: "scale(1.05)",
+                zIndex: 0,
+              }}
+            />
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ background: hexToRgba(primaryColor, 0.54), zIndex: 1 }}
+            />
+          </>
+        )}
+        <p className="relative z-10 type-body-md" style={{ color: textPrimary }}>Loading...</p>
       </div>
     );
   }
 
   if (state === "start") {
     return (
-      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center p-4">
-        <div className="pointer-events-none absolute inset-0 bg-black/45" />
+      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+        {backgroundImageUrl && (
+          <>
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage: `url(${backgroundImageUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center center",
+                filter: "blur(4px)",
+                transform: "scale(1.05)",
+                zIndex: 0,
+              }}
+            />
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ background: hexToRgba(primaryColor, 0.54), zIndex: 1 }}
+            />
+          </>
+        )}
         <section
-          className="relative ui-border ui-radius-lg flex w-full max-w-[760px] flex-col items-center gap-6 px-8 py-10 text-center"
-          style={{
-            background: "color-mix(in srgb, var(--bg-panel) 88%, black 12%)",
-            boxShadow:
-              "0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent), 0 20px 60px color-mix(in srgb, var(--accent) 14%, transparent), 0 18px 40px rgba(0,0,0,0.42)",
-          }}
+          className="relative z-10 flex w-full max-w-[760px] flex-col items-center gap-6 px-8 py-10 text-center"
         >
-          <div
-            className="absolute left-0 top-0 h-[2px] w-full rounded-t-[inherit]"
-            style={{
-              background: transitionColor
-                ? `linear-gradient(90deg, var(--accent) 0%, ${transitionColor} 100%)`
-                : "var(--accent)",
-            }}
-          />
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="Form logo" className="h-[56px] w-auto object-contain" />
@@ -346,8 +429,8 @@ export default function FormsRunnerPage() {
               Q<span style={{ color: "var(--accent)" }}>&amp;</span>A
             </div>
           )}
-          <h1 className="type-display-md m-0" style={{ fontFamily: "var(--runner-font-primary)" }}>{formName || "Application"}</h1>
-          <p className="type-body-md ui-text-secondary m-0" style={{ fontFamily: "var(--runner-font-secondary)" }}>{resolvedIntroText}</p>
+          <h1 className="type-display-md m-0" style={{ fontFamily: "var(--runner-font-primary)", color: textPrimary }}>{formName || "Application"}</h1>
+          <p className="type-body-md m-0" style={{ fontFamily: "var(--runner-font-secondary)", color: textMuted }}>{resolvedIntroText}</p>
           <Button variant="accent" onClick={handleStart} disabled={isSubmitting} className="min-w-[220px]">
             {isSubmitting ? "Starting..." : "Start"}
           </Button>
@@ -363,33 +446,46 @@ export default function FormsRunnerPage() {
     const displayTitle = rawTitle.replace(/\\n/g, "\n");
 
     return (
-      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center p-4">
-        <div className="pointer-events-none absolute inset-0 bg-black/45" />
+      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+        {backgroundImageUrl && (
+          <>
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage: `url(${backgroundImageUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center center",
+                filter: "blur(4px)",
+                transform: "scale(1.05)",
+                zIndex: 0,
+              }}
+            />
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ background: hexToRgba(primaryColor, 0.54), zIndex: 1 }}
+            />
+          </>
+        )}
         <section
-          className="relative ui-border ui-radius-lg flex w-full max-w-[760px] flex-col gap-6 px-8 py-8"
-          style={{
-            background: "color-mix(in srgb, var(--bg-panel) 88%, black 12%)",
-            boxShadow:
-              "0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent), 0 20px 60px color-mix(in srgb, var(--accent) 14%, transparent), 0 18px 40px rgba(0,0,0,0.42)",
-          }}
+          className="relative z-10 flex w-full max-w-[620px] flex-col gap-6 px-8 py-8"
         >
-          <div
-            className="absolute left-0 top-0 h-[2px] w-full rounded-t-[inherit]"
-            style={{
-              background: transitionColor
-                ? `linear-gradient(90deg, var(--accent) 0%, ${transitionColor} 100%)`
-                : "var(--accent)",
-            }}
-          />
-          <div className="h-[6px] w-full overflow-hidden rounded-full bg-[var(--bg-field)]">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="type-label-sm uppercase tracking-[0.1em]" style={{ color: backButtonColor, fontFamily: "var(--runner-font-primary)" }}>
+              Question {String(stepIndex + 1).padStart(2, "0")}
+            </div>
+            <div className="type-label-sm" style={{ color: backButtonColor, fontFamily: "var(--runner-font-secondary)" }}>
+              {Math.min(stepIndex + 1, totalQuestions)} of {totalQuestions || "?"}
+            </div>
+          </div>
+          <div className="h-[2px] w-full overflow-hidden rounded-full" style={{ background: progressTrack }}>
             <div className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-150" style={{ width: `${progressPercent}%` }} />
           </div>
 
-          <h2 className="type-heading-lg m-0 whitespace-pre-line" style={{ fontFamily: "var(--runner-font-primary)" }}>
+          <h2 className="type-heading-lg m-0 whitespace-pre-line" style={{ fontFamily: "var(--runner-font-primary)", color: textPrimary }}>
             {displayTitle}
           </h2>
           {(currentQuestion.renderedHelpText ?? currentQuestion.helpText) && (
-            <p className="type-body-md ui-text-secondary -mt-3 m-0" style={{ fontFamily: "var(--runner-font-secondary)" }}>
+            <p className="type-body-md -mt-3 m-0" style={{ fontFamily: "var(--runner-font-secondary)", color: textMuted }}>
               {currentQuestion.renderedHelpText ?? currentQuestion.helpText}
             </p>
           )}
@@ -403,11 +499,17 @@ export default function FormsRunnerPage() {
             className="flex flex-col gap-6"
           >
             {renderInput()}
-            <div className={`flex gap-3 ${currentQuestion.type === "instruction" ? "flex-row-reverse" : ""}`}>
+            <div className={`flex items-center justify-between gap-3 ${currentQuestion.type === "instruction" ? "flex-row-reverse" : ""}`}>
               {currentQuestion.type !== "instruction" && (
-                <Button type="button" variant="ghost" onClick={handleBack} disabled={isSubmitting || stepIndex === 0}>
-                  Back
-                </Button>
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={isSubmitting || stepIndex === 0}
+                  className="text-[11px] font-bold uppercase tracking-[0.06em] transition-opacity disabled:opacity-30"
+                  style={{ color: backButtonColor, fontFamily: "var(--runner-font-primary)" }}
+                >
+                  ← Back
+                </button>
               )}
               <Button type="submit" variant="accent" disabled={isSubmitting} className={currentQuestion.type === "instruction" ? "w-full" : ""}>
                 {isSubmitting ? "Saving..." : "Next"}
@@ -421,26 +523,31 @@ export default function FormsRunnerPage() {
 
   if (state === "completed") {
     return (
-      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center p-4">
-        <div className="pointer-events-none absolute inset-0 bg-black/45" />
+      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+        {backgroundImageUrl && (
+          <>
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage: `url(${backgroundImageUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center center",
+                filter: "blur(4px)",
+                transform: "scale(1.05)",
+                zIndex: 0,
+              }}
+            />
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ background: hexToRgba(primaryColor, 0.54), zIndex: 1 }}
+            />
+          </>
+        )}
         <section
-          className="relative ui-border ui-radius-lg flex w-full max-w-[560px] flex-col items-center gap-4 px-8 py-10 text-center"
-          style={{
-            background: "color-mix(in srgb, var(--bg-panel) 88%, black 12%)",
-            boxShadow:
-              "0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent), 0 20px 60px color-mix(in srgb, var(--accent) 14%, transparent), 0 18px 40px rgba(0,0,0,0.42)",
-          }}
+          className="relative z-10 flex w-full max-w-[560px] flex-col items-center gap-4 px-8 py-10 text-center"
         >
-          <div
-            className="absolute left-0 top-0 h-[2px] w-full rounded-t-[inherit]"
-            style={{
-              background: transitionColor
-                ? `linear-gradient(90deg, var(--accent) 0%, ${transitionColor} 100%)`
-                : "var(--accent)",
-            }}
-          />
-          <h1 className="type-display-md m-0" style={{ fontFamily: "var(--runner-font-primary)" }}>{resolvedCompletionTitle}</h1>
-          <p className="type-body-md ui-text-secondary m-0" style={{ fontFamily: "var(--runner-font-secondary)" }}>
+          <h1 className="type-display-md m-0" style={{ fontFamily: "var(--runner-font-primary)", color: textPrimary }}>{resolvedCompletionTitle}</h1>
+          <p className="type-body-md m-0" style={{ fontFamily: "var(--runner-font-secondary)", color: textMuted }}>
             {resolvedCompletionMessage}
           </p>
         </section>

@@ -334,10 +334,6 @@ export function FormEditorWorkspace({
                       <label htmlFor="zapierHookUrl" className="type-body-sm ui-text-primary">Zapier hook URL</label>
                       <Input id="zapierHookUrl" name="zapierHookUrl" type="url" defaultValue={form.zapierHookUrl || ""} />
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <label htmlFor="backgroundImageUrl" className="type-body-sm ui-text-primary">Background image URL</label>
-                      <Input id="backgroundImageUrl" name="backgroundImageUrl" type="url" defaultValue={form.backgroundImageUrl || ""} />
-                    </div>
                   </div>
                   <div className="flex flex-col gap-2">
                     <label htmlFor="introText" className="type-body-sm ui-text-primary">Intro text</label>
@@ -593,6 +589,10 @@ export function FormEditorWorkspace({
                     <div className="flex flex-col gap-2">
                       <label htmlFor="logoUrl" className="type-body-sm ui-text-primary">Logo PNG URL</label>
                       <Input id="logoUrl" name="logoUrl" defaultValue={form.logoUrl || ""} placeholder="https://.../logo.png" />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label htmlFor="backgroundImageUrl" className="type-body-sm ui-text-primary">Background image URL</label>
+                      <Input id="backgroundImageUrl" name="backgroundImageUrl" type="url" defaultValue={form.backgroundImageUrl || ""} />
                     </div>
                     <div className="flex flex-col gap-2">
                       <label htmlFor="primaryFont" className="type-body-sm ui-text-primary">Primary font</label>
