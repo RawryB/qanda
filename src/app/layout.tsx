@@ -35,7 +35,7 @@ export default function RootLayout({
       afterSignInUrl="/admin"
       afterSignUpUrl="/admin"
     >
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body
           className={`${dmSans.variable} ${syne.variable} ${geistMono.variable} antialiased`}
         >

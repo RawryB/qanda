@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getForms } from "./actions";
 import { DeleteFormButton } from "./components/DeleteFormButton";
+import { DuplicateFormButton } from "./components/DuplicateFormButton";
 import { Badge, Button, Card } from "@/components/ui";
 
 export default async function QandaFormsPage() {
@@ -58,6 +59,7 @@ export default async function QandaFormsPage() {
                     ✎
                   </Button>
                 </Link>
+                <DuplicateFormButton formId={form.id} formName={form.name} />
                 <DeleteFormButton formId={form.id} formName={form.name} />
               </div>
             </Card>

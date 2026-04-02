@@ -12,6 +12,27 @@ function getPrismaErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
+async function getUniqueCopyNameAndSlug(name: string, slug: string) {
+  const baseName = `${name} (Copy)`;
+  const baseSlug = `${slug}-copy`;
+
+  let attempt = 1;
+  while (attempt < 1000) {
+    const candidateName = attempt === 1 ? baseName : `${baseName} ${attempt}`;
+    const candidateSlug = attempt === 1 ? baseSlug : `${baseSlug}-${attempt}`;
+    const existing = await prisma.qandaForm.findFirst({
+      where: {
+        OR: [{ name: candidateName }, { slug: candidateSlug }],
+      },
+      select: { id: true },
+    });
+    if (!existing) return { name: candidateName, slug: candidateSlug };
+    attempt += 1;
+  }
+
+  throw new Error("Unable to generate a unique name/slug for duplicate form");
+}
+
 export async function createForm(formData: FormData) {
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
@@ -248,6 +269,151 @@ export async function deleteForm(id: string) {
     }
     throw error;
   }
+}
+
+export async function duplicateForm(id: string) {
+  const source = await prisma.qandaForm.findUnique({
+    where: { id },
+    include: {
+      questions: {
+        orderBy: { order: "asc" },
+        include: {
+          choices: {
+            orderBy: { order: "asc" },
+          },
+        },
+      },
+      logicRules: {
+        orderBy: { priority: "asc" },
+      },
+      outcomeRules: {
+        orderBy: { priority: "asc" },
+        include: {
+          conditions: {
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      },
+    },
+  });
+
+  if (!source) {
+    throw new Error("Form not found");
+  }
+
+  const { name, slug } = await getUniqueCopyNameAndSlug(source.name, source.slug);
+
+  const duplicatedFormId = await prisma.$transaction(async (tx) => {
+    const duplicated = await tx.qandaForm.create({
+      data: {
+        name,
+        slug,
+        status: "draft",
+        primaryColor: source.primaryColor,
+        accentColor: source.accentColor,
+        transitionColor: source.transitionColor,
+        primaryFont: source.primaryFont,
+        secondaryFont: source.secondaryFont,
+        logoUrl: source.logoUrl,
+        redirectUrl: source.redirectUrl,
+        zapierHookUrl: source.zapierHookUrl,
+        backgroundImageUrl: source.backgroundImageUrl,
+        introText: source.introText,
+        completionTitle: source.completionTitle,
+        completionMessage: source.completionMessage,
+        showQuestionCount: source.showQuestionCount,
+      },
+      select: { id: true },
+    });
+
+    const questionIdMap = new Map<string, string>();
+    for (const q of source.questions) {
+      const createdQuestion = await tx.qandaQuestion.create({
+        data: {
+          formId: duplicated.id,
+          order: q.order,
+          type: q.type,
+          key: q.key,
+          title: q.title,
+          helpText: q.helpText,
+          required: q.required,
+        },
+        select: { id: true },
+      });
+      questionIdMap.set(q.id, createdQuestion.id);
+
+      if (q.choices.length > 0) {
+        await tx.qandaChoice.createMany({
+          data: q.choices.map((c) => ({
+            questionId: createdQuestion.id,
+            order: c.order,
+            value: c.value,
+            label: c.label,
+          })),
+        });
+      }
+    }
+
+    for (const rule of source.logicRules) {
+      const mappedSourceQuestionId = questionIdMap.get(rule.sourceQuestionId);
+      if (!mappedSourceQuestionId) continue;
+      const mappedDestinationQuestionId = rule.destinationQuestionId
+        ? (questionIdMap.get(rule.destinationQuestionId) ?? null)
+        : null;
+
+      await tx.qandaLogicRule.create({
+        data: {
+          formId: duplicated.id,
+          sourceQuestionId: mappedSourceQuestionId,
+          operator: rule.operator,
+          compareValue: rule.compareValue,
+          destinationQuestionId: mappedDestinationQuestionId,
+          isEnd: rule.isEnd,
+          priority: rule.priority,
+        },
+      });
+    }
+
+    for (const outcomeRule of source.outcomeRules) {
+      const createdOutcomeRule = await tx.qandaOutcomeRule.create({
+        data: {
+          formId: duplicated.id,
+          name: outcomeRule.name,
+          priority: outcomeRule.priority,
+          isActive: outcomeRule.isActive,
+          matchType: outcomeRule.matchType,
+          destinationType: outcomeRule.destinationType,
+          destinationValue: outcomeRule.destinationValue,
+          segmentKey: outcomeRule.segmentKey,
+        },
+        select: { id: true },
+      });
+
+      const mappedConditions = outcomeRule.conditions
+        .map((condition) => {
+          const mappedQuestionId = questionIdMap.get(condition.questionId);
+          if (!mappedQuestionId) return null;
+          return {
+            outcomeRuleId: createdOutcomeRule.id,
+            questionId: mappedQuestionId,
+            operator: condition.operator,
+            value: condition.value,
+          };
+        })
+        .filter((condition): condition is NonNullable<typeof condition> => condition !== null);
+
+      if (mappedConditions.length > 0) {
+        await tx.qandaOutcomeCondition.createMany({
+          data: mappedConditions,
+        });
+      }
+    }
+
+    return duplicated.id;
+  });
+
+  revalidatePath("/admin/qanda/forms");
+  return duplicatedFormId;
 }
 
 export async function getForm(id: string) {
