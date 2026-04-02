@@ -230,6 +230,7 @@ type FormData = {
   introText: string | null;
   completionTitle: string | null;
   completionMessage: string | null;
+  showQuestionCount: boolean;
 };
 
 export function FormEditorWorkspace({
@@ -1289,6 +1290,29 @@ export function FormEditorWorkspace({
                           </option>
                         ))}
                       </Select>
+                    </div>
+                    <div className="flex flex-col gap-2 md:col-span-2">
+                      <label className="type-body-sm ui-text-primary">Question Counter</label>
+                      <div className="inline-flex items-center gap-3">
+                        <input type="hidden" name="showQuestionCount" value="false" />
+                        <label className="relative inline-flex cursor-pointer items-center">
+                          <input
+                            type="checkbox"
+                            name="showQuestionCount"
+                            value="true"
+                            defaultChecked={form.showQuestionCount}
+                            className="peer sr-only"
+                          />
+                          <span className="h-6 w-11 rounded-full bg-[var(--bg-field)] transition-colors peer-checked:bg-[var(--text-primary)]" />
+                          <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-[var(--bg-panel)] shadow-sm transition-transform peer-checked:translate-x-5" />
+                        </label>
+                        <span className="type-body-sm ui-text-primary">
+                          Show total question counter (x/y) on the right side
+                        </span>
+                      </div>
+                      <small className="type-meta-sm ui-text-muted">
+                        The left question number (e.g. &quot;Question 01&quot;) always stays visible.
+                      </small>
                     </div>
                   </div>
                   <div>

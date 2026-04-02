@@ -91,6 +91,7 @@ export default function FormsRunnerPage() {
   const [introText, setIntroText] = useState<string | null>(null);
   const [completionTitle, setCompletionTitle] = useState<string | null>(null);
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
+  const [showQuestionCount, setShowQuestionCount] = useState(true);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
@@ -107,6 +108,8 @@ export default function FormsRunnerPage() {
     "Thanks for your interest. Answering these questions helps us understand your needs and follow up quickly.";
   const resolvedCompletionTitle = completionTitle || "Done";
   const resolvedCompletionMessage = completionMessage || "Thank you for your submission!";
+  const displayIntroText = resolvedIntroText.replace(/\\n/g, "\n");
+  const displayCompletionMessage = resolvedCompletionMessage.replace(/\\n/g, "\n");
 
   const primaryLuminance = useMemo(() => getLuminance(primaryColor), [primaryColor]);
   const accentLuminance = useMemo(() => getLuminance(accentColor), [accentColor]);
@@ -185,6 +188,7 @@ export default function FormsRunnerPage() {
       if (data.form?.introText !== undefined) setIntroText(data.form.introText ?? null);
       if (data.form?.completionTitle !== undefined) setCompletionTitle(data.form.completionTitle ?? null);
       if (data.form?.completionMessage !== undefined) setCompletionMessage(data.form.completionMessage ?? null);
+      if (typeof data.form?.showQuestionCount === "boolean") setShowQuestionCount(data.form.showQuestionCount);
       if (typeof data.form?.primaryColor === "string") setPrimaryColor(data.form.primaryColor);
       if (typeof data.form?.accentColor === "string") setAccentColor(data.form.accentColor);
       if (typeof data.form?.transitionColor === "string") setTransitionColor(data.form.transitionColor);
@@ -445,7 +449,7 @@ export default function FormsRunnerPage() {
             </div>
           )}
           <h1 className="type-display-md m-0" style={{ fontFamily: "var(--runner-font-primary)", color: textPrimary }}>{formName || "Application"}</h1>
-          <p className="type-body-md m-0" style={{ fontFamily: "var(--runner-font-secondary)", color: textMuted }}>{resolvedIntroText}</p>
+          <p className="type-body-md m-0 whitespace-pre-line" style={{ fontFamily: "var(--runner-font-secondary)", color: textMuted }}>{displayIntroText}</p>
           <Button variant="accent" onClick={handleStart} disabled={isSubmitting} className="min-w-[220px]">
             {isSubmitting ? "Starting..." : "Start"}
           </Button>
@@ -488,9 +492,11 @@ export default function FormsRunnerPage() {
             <div className="type-label-sm uppercase tracking-[0.1em]" style={{ color: backButtonColor, fontFamily: "var(--runner-font-primary)" }}>
               Question {String(stepIndex + 1).padStart(2, "0")}
             </div>
-            <div className="type-label-sm" style={{ color: backButtonColor, fontFamily: "var(--runner-font-secondary)" }}>
-              {Math.min(stepIndex + 1, totalQuestions)} of {totalQuestions || "?"}
-            </div>
+            {showQuestionCount && (
+              <div className="type-label-sm" style={{ color: backButtonColor, fontFamily: "var(--runner-font-secondary)" }}>
+                {Math.min(stepIndex + 1, totalQuestions)} of {totalQuestions || "?"}
+              </div>
+            )}
           </div>
           <div className="h-[2px] w-full overflow-hidden rounded-full" style={{ background: progressTrack }}>
             <div className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-150" style={{ width: `${progressPercent}%` }} />
@@ -562,8 +568,8 @@ export default function FormsRunnerPage() {
           className="relative z-10 flex w-full max-w-[560px] flex-col items-center gap-4 px-8 py-10 text-center"
         >
           <h1 className="type-display-md m-0" style={{ fontFamily: "var(--runner-font-primary)", color: textPrimary }}>{resolvedCompletionTitle}</h1>
-          <p className="type-body-md m-0" style={{ fontFamily: "var(--runner-font-secondary)", color: textMuted }}>
-            {resolvedCompletionMessage}
+          <p className="type-body-md m-0 whitespace-pre-line" style={{ fontFamily: "var(--runner-font-secondary)", color: textMuted }}>
+            {displayCompletionMessage}
           </p>
         </section>
       </div>

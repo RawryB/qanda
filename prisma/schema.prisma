@@ -30,6 +30,7 @@ model QandaForm {
   introText         String?
   completionTitle   String?
   completionMessage String?
+  showQuestionCount Boolean           @default(true)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   questions         QandaQuestion[]

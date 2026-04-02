@@ -96,6 +96,7 @@ export async function POST(request: Request) {
         introText: form.introText,
         completionTitle: form.completionTitle,
         completionMessage: form.completionMessage,
+        showQuestionCount: form.showQuestionCount,
         primaryColor: form.primaryColor,
         accentColor: form.accentColor,
         transitionColor: form.transitionColor,

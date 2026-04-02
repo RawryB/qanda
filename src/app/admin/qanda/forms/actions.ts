@@ -28,6 +28,8 @@ export async function createForm(formData: FormData) {
   const introText = formData.get("introText") as string | null;
   const completionTitle = formData.get("completionTitle") as string | null;
   const completionMessage = formData.get("completionMessage") as string | null;
+  const showQuestionCountRaw = formData.get("showQuestionCount");
+  const showQuestionCount = showQuestionCountRaw === null ? true : String(showQuestionCountRaw) === "true";
 
   // Validate slug format
   if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -95,6 +97,7 @@ export async function createForm(formData: FormData) {
         introText: introText?.trim() || null,
         completionTitle: completionTitle?.trim() || null,
         completionMessage: completionMessage?.trim() || null,
+        showQuestionCount,
       },
     });
 
@@ -128,6 +131,12 @@ export async function updateForm(id: string, formData: FormData) {
     return value;
   };
 
+  const getOptionalBoolean = (key: string, fallback: boolean) => {
+    const value = formData.get(key);
+    if (value === null) return fallback;
+    return String(value) === "true";
+  };
+
   const name = getStringOrDefault("name", existing.name);
   const slug = getStringOrDefault("slug", existing.slug);
   const status = getStringOrDefault("status", existing.status);
@@ -143,6 +152,7 @@ export async function updateForm(id: string, formData: FormData) {
   const introText = getOptionalString("introText", existing.introText);
   const completionTitle = getOptionalString("completionTitle", existing.completionTitle);
   const completionMessage = getOptionalString("completionMessage", existing.completionMessage);
+  const showQuestionCount = getOptionalBoolean("showQuestionCount", existing.showQuestionCount);
 
   // Validate slug format
   if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -211,6 +221,7 @@ export async function updateForm(id: string, formData: FormData) {
         introText: introText?.trim() || null,
         completionTitle: completionTitle?.trim() || null,
         completionMessage: completionMessage?.trim() || null,
+        showQuestionCount,
       },
     });
 
