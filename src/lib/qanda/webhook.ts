@@ -5,6 +5,33 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+function getAnswerValue(answer: { valueText: string | null; valueJson: unknown }) {
+  if (answer.valueText !== null && answer.valueText !== undefined) {
+    return answer.valueText;
+  }
+  if (answer.valueJson !== null && answer.valueJson !== undefined) {
+    if (typeof answer.valueJson === "boolean") return answer.valueJson;
+    if (typeof answer.valueJson === "string" || typeof answer.valueJson === "number") {
+      return answer.valueJson;
+    }
+  }
+  return null;
+}
+
+function getSchemaSampleValue(type: string) {
+  switch (type) {
+    case "yesno":
+      return false;
+    case "multi":
+    case "dropdown":
+      return "";
+    case "instruction":
+      return null;
+    default:
+      return "";
+  }
+}
+
 /**
  * Fires a webhook to Zapier when a submission is completed.
  * Best-effort: does not throw errors that would break the caller.
@@ -21,6 +48,15 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
             slug: true,
             name: true,
             zapierHookUrl: true,
+            questions: {
+              orderBy: { order: "asc" },
+              select: {
+                id: true,
+                key: true,
+                title: true,
+                type: true,
+              },
+            },
           },
         },
         answers: {
@@ -61,19 +97,12 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
     const zapierHookUrl = submission.form.zapierHookUrl;
 
     // Build payload
-    const values: Record<string, string | number | boolean> = {};
+    const values: Record<string, string | number | boolean | null> = {};
+    for (const question of submission.form.questions) {
+      values[question.key] = null;
+    }
     const answers = submission.answers.map((answer) => {
-      // Determine value for answer
-      let value: string | number | boolean | null = null;
-      if (answer.valueText !== null && answer.valueText !== undefined) {
-        value = answer.valueText;
-      } else if (answer.valueJson !== null && answer.valueJson !== undefined) {
-        if (typeof answer.valueJson === "boolean") {
-          value = answer.valueJson;
-        } else if (typeof answer.valueJson === "string" || typeof answer.valueJson === "number") {
-          value = answer.valueJson;
-        }
-      }
+      const value = getAnswerValue(answer);
 
       // Add to values map for convenience
       if (value !== null) {
@@ -195,5 +224,81 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
   } catch (error: unknown) {
     // Catch-all: don't throw errors that would break the caller
     console.error("Error in fireZapierOnCompletion:", error);
+  }
+}
+
+export async function fireZapierSchemaTestForForm(
+  formId: string,
+): Promise<{ sent: boolean; reason?: string }> {
+  try {
+    const form = await prisma.qandaForm.findUnique({
+      where: { id: formId },
+      include: {
+        questions: {
+          orderBy: { order: "asc" },
+          include: {
+            choices: {
+              orderBy: { order: "asc" },
+              select: {
+                value: true,
+                label: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!form) return { sent: false, reason: "Form not found" };
+    if (!form.zapierHookUrl) return { sent: false, reason: "Zapier hook URL is not configured" };
+
+    const values: Record<string, string | number | boolean | null> = {};
+    const schema = form.questions.map((question) => {
+      const sampleValue = getSchemaSampleValue(question.type);
+      values[question.key] = sampleValue;
+
+      return {
+        questionId: question.id,
+        key: question.key,
+        title: question.title,
+        type: question.type,
+        choices: question.choices.map((choice) => ({
+          value: choice.value,
+          label: choice.label,
+        })),
+        sampleValue,
+      };
+    });
+
+    const payload = {
+      event: "qanda.form.schema",
+      form: {
+        id: form.id,
+        slug: form.slug,
+        name: form.name,
+      },
+      generatedAt: new Date().toISOString(),
+      schema,
+      values,
+    };
+
+    const response = await fetch(form.zapierHookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.status >= 200 && response.status < 300) {
+      return { sent: true };
+    }
+
+    return { sent: false, reason: `Zapier returned HTTP ${response.status}` };
+  } catch (error: unknown) {
+    return {
+      sent: false,
+      reason: getErrorMessage(error, "Failed to send Zapier schema payload"),
+    };
   }
 }

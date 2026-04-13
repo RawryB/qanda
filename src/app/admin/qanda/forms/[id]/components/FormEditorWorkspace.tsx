@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Card, Input, Select } from "@/components/ui";
-import { updateForm } from "../../actions";
+import { sendZapierSchemaPayload, updateForm } from "../../actions";
 import {
   createOutcomeRule,
   deleteOutcomeRule,
@@ -357,6 +357,18 @@ export function FormEditorWorkspace({
     });
   };
 
+  const handleSendZapierSchema = () => {
+    startTransition(async () => {
+      try {
+        await sendZapierSchemaPayload(form.id);
+        window.alert("Sent full schema payload to Zapier.");
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Failed to send schema payload";
+        window.alert(message);
+      }
+    });
+  };
+
   const handleQuestionCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new window.FormData(e.currentTarget);
@@ -652,7 +664,21 @@ export function FormEditorWorkspace({
                     </div>
                   </div>
                   <div>
-                    <Button type="submit" size="sm" disabled={isPending}>Save form</Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button type="submit" size="sm" disabled={isPending}>Save form</Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleSendZapierSchema}
+                        disabled={isPending}
+                      >
+                        Send Zapier schema payload
+                      </Button>
+                    </div>
+                    <p className="mt-2 type-meta-sm ui-text-muted">
+                      Sends every question key (including conditional paths) so Zapier can map the full payload.
+                    </p>
                   </div>
                 </form>
               </Card>

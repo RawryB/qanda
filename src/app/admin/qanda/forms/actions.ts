@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { fireZapierSchemaTestForForm } from "@/lib/qanda/webhook";
 
 function getPrismaErrorCode(error: unknown): string | undefined {
   if (typeof error === "object" && error !== null && "code" in error) {
@@ -454,4 +455,11 @@ export async function getForms() {
       completionRate,
     };
   });
+}
+
+export async function sendZapierSchemaPayload(formId: string) {
+  const result = await fireZapierSchemaTestForForm(formId);
+  if (!result.sent) {
+    throw new Error(result.reason || "Failed to send Zapier schema payload");
+  }
 }
