@@ -58,11 +58,14 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
             zapierHookUrl: true,
             questions: {
               orderBy: { order: "asc" },
-              select: {
-                id: true,
-                key: true,
-                title: true,
-                type: true,
+              include: {
+                choices: {
+                  orderBy: { order: "asc" },
+                  select: {
+                    value: true,
+                    label: true,
+                  },
+                },
               },
             },
           },
@@ -126,6 +129,24 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
       };
     });
 
+    const flatValues: Record<string, string | number | boolean | null> = {};
+    const fieldLabels: Record<string, string> = {};
+    const fieldTypes: Record<string, string> = {};
+    const fieldOptions: Record<string, string> = {};
+
+    for (const question of submission.form.questions) {
+      const safeKey = toSafeFieldKey(question.key);
+      const flatValueKey = `answer_${safeKey}`;
+      const flatLabelKey = `label_${safeKey}`;
+      const flatTypeKey = `type_${safeKey}`;
+      const flatOptionsKey = `options_${safeKey}`;
+
+      flatValues[flatValueKey] = values[question.key] ?? null;
+      fieldLabels[flatLabelKey] = question.title;
+      fieldTypes[flatTypeKey] = question.type;
+      fieldOptions[flatOptionsKey] = question.choices.map((choice) => choice.label).join(" | ");
+    }
+
     const payload = {
       event: "qanda.submission.completed",
       submissionId: submission.id,
@@ -135,6 +156,11 @@ export async function fireZapierOnCompletion(submissionId: string): Promise<void
         name: submission.form.name,
       },
       completedAt: submission.completedAt?.toISOString() || null,
+      ...flatValues,
+      ...fieldLabels,
+      ...fieldTypes,
+      ...fieldOptions,
+      questionCount: submission.form.questions.length,
       resolvedOutcome: submission.resolvedOutcome
         ? {
             matched: Boolean(submission.resolvedOutcome.outcomeRuleId),
