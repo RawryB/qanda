@@ -32,6 +32,14 @@ function getSchemaSampleValue(type: string) {
   }
 }
 
+function toSafeFieldKey(key: string) {
+  return key
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
 /**
  * Fires a webhook to Zapier when a submission is completed.
  * Best-effort: does not throw errors that would break the caller.
@@ -253,9 +261,23 @@ export async function fireZapierSchemaTestForForm(
     if (!form.zapierHookUrl) return { sent: false, reason: "Zapier hook URL is not configured" };
 
     const values: Record<string, string | number | boolean | null> = {};
+    const flatValues: Record<string, string | number | boolean | null> = {};
+    const fieldLabels: Record<string, string> = {};
+    const fieldTypes: Record<string, string> = {};
+    const fieldOptions: Record<string, string> = {};
     const schema = form.questions.map((question) => {
       const sampleValue = getSchemaSampleValue(question.type);
       values[question.key] = sampleValue;
+      const safeKey = toSafeFieldKey(question.key);
+      const flatValueKey = `answer_${safeKey}`;
+      const flatLabelKey = `label_${safeKey}`;
+      const flatTypeKey = `type_${safeKey}`;
+      const flatOptionsKey = `options_${safeKey}`;
+
+      flatValues[flatValueKey] = sampleValue;
+      fieldLabels[flatLabelKey] = question.title;
+      fieldTypes[flatTypeKey] = question.type;
+      fieldOptions[flatOptionsKey] = question.choices.map((choice) => choice.label).join(" | ");
 
       return {
         questionId: question.id,
@@ -278,6 +300,12 @@ export async function fireZapierSchemaTestForForm(
         name: form.name,
       },
       generatedAt: new Date().toISOString(),
+      // Zapier-friendly flat keys for easier field mapping.
+      ...flatValues,
+      ...fieldLabels,
+      ...fieldTypes,
+      ...fieldOptions,
+      questionCount: form.questions.length,
       schema,
       values,
     };
