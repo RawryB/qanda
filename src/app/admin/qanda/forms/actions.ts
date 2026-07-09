@@ -184,6 +184,7 @@ export async function updateForm(id: string, formData: FormData) {
   const completionMessage = getOptionalString("completionMessage", existing.completionMessage);
   const showQuestionCount = getOptionalBoolean("showQuestionCount", existing.showQuestionCount);
   const skipIntro = getOptionalBoolean("skipIntro", existing.skipIntro);
+  const flushContent = getOptionalBoolean("flushContent", existing.flushContent);
   const contentAlignH = parseContentAlignH(
     typeof formData.get("contentAlignH") === "string" ? (formData.get("contentAlignH") as string) : null,
     parseContentAlignH(existing.contentAlignH),
@@ -262,6 +263,7 @@ export async function updateForm(id: string, formData: FormData) {
         completionMessage: completionMessage?.trim() || null,
         showQuestionCount,
         skipIntro,
+        flushContent,
         contentAlignH,
         contentAlignV,
       },
@@ -344,6 +346,7 @@ export async function duplicateForm(id: string) {
         completionMessage: source.completionMessage,
         showQuestionCount: source.showQuestionCount,
         skipIntro: source.skipIntro,
+        flushContent: source.flushContent,
         contentAlignH: source.contentAlignH,
         contentAlignV: source.contentAlignV,
       },

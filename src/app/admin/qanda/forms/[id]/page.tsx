@@ -39,6 +39,7 @@ export default async function EditFormPage({
         completionMessage: form.completionMessage,
         showQuestionCount: form.showQuestionCount,
         skipIntro: form.skipIntro,
+        flushContent: form.flushContent,
         contentAlignH: form.contentAlignH,
         contentAlignV: form.contentAlignV,
       }}

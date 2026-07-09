@@ -32,3 +32,31 @@ export function getErrorTextClasses(horizontal: ContentAlignH) {
   if (horizontal === "right") return "text-right";
   return "text-center";
 }
+
+export function getShellPaddingClasses(flush: boolean) {
+  return flush ? "p-0" : "p-4";
+}
+
+export function getSectionPaddingClasses(
+  flush: boolean,
+  vertical: ContentAlignV,
+  variant: "intro" | "question" | "completion",
+) {
+  if (!flush) {
+    if (variant === "question") return "px-8 py-8";
+    return "px-8 py-10";
+  }
+
+  const horizontalPad = "px-0";
+  if (vertical === "top") {
+    return variant === "question" ? `${horizontalPad} pt-0 pb-8` : `${horizontalPad} pt-0 pb-10`;
+  }
+  if (vertical === "bottom") {
+    return variant === "question" ? `${horizontalPad} pt-8 pb-0` : `${horizontalPad} pt-10 pb-0`;
+  }
+  return variant === "question" ? `${horizontalPad} py-8` : `${horizontalPad} py-10`;
+}
+
+export function getErrorPaddingClasses(flush: boolean) {
+  return flush ? "px-0" : "px-8";
+}

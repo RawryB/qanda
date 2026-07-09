@@ -5,8 +5,11 @@ import { Button } from "@/components/ui";
 import type { PublicFormInfo } from "@/lib/forms/get-public-form-info";
 import {
   getCenteredSectionClasses,
+  getErrorPaddingClasses,
   getErrorTextClasses,
+  getSectionPaddingClasses,
   getShellAlignmentClasses,
+  getShellPaddingClasses,
   parseContentAlignH,
   parseContentAlignV,
 } from "@/lib/forms/runner-alignment";
@@ -79,9 +82,14 @@ export function FormsRunnerClient({
   const autoStartAttempted = useRef(false);
   const contentAlignH = parseContentAlignH(initialFormInfo?.contentAlignH);
   const contentAlignV = parseContentAlignV(initialFormInfo?.contentAlignV);
-  const shellClassName = `relative flex min-h-screen overflow-hidden p-4 ${getShellAlignmentClasses(contentAlignH, contentAlignV)}`;
+  const flushContent = initialFormInfo?.flushContent ?? false;
+  const shellClassName = `relative flex min-h-screen overflow-hidden ${getShellPaddingClasses(flushContent)} ${getShellAlignmentClasses(contentAlignH, contentAlignV)}`;
   const centeredSectionClassName = getCenteredSectionClasses(contentAlignH);
   const errorTextClassName = getErrorTextClasses(contentAlignH);
+  const errorPaddingClassName = getErrorPaddingClasses(flushContent);
+  const introSectionPaddingClassName = getSectionPaddingClasses(flushContent, contentAlignV, "intro");
+  const questionSectionPaddingClassName = getSectionPaddingClasses(flushContent, contentAlignV, "question");
+  const completionSectionPaddingClassName = getSectionPaddingClasses(flushContent, contentAlignV, "completion");
 
   const [state, setState] = useState<FormState>("start");
   const [formName, setFormName] = useState(initialFormInfo?.name ?? "");
@@ -397,7 +405,7 @@ export function FormsRunnerClient({
         <div style={shellStyle} className={shellClassName}>
           {backgroundLayers}
           {error && (
-            <p className={`relative z-10 m-0 px-8 text-[var(--danger-fg)] ${errorTextClassName}`}>{error}</p>
+            <p className={`relative z-10 m-0 text-[var(--danger-fg)] ${errorPaddingClassName} ${errorTextClassName}`}>{error}</p>
           )}
         </div>
       );
@@ -407,7 +415,7 @@ export function FormsRunnerClient({
       <div style={shellStyle} className={shellClassName}>
         {backgroundLayers}
         <section
-          className={`relative z-10 flex w-full max-w-[760px] flex-col gap-6 px-8 py-10 ${centeredSectionClassName}`}
+          className={`relative z-10 flex w-full max-w-[760px] flex-col gap-6 ${introSectionPaddingClassName} ${centeredSectionClassName}`}
         >
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -448,7 +456,7 @@ export function FormsRunnerClient({
     return (
       <div style={shellStyle} className={shellClassName}>
         {backgroundLayers}
-        <section className="relative z-10 flex w-full max-w-[620px] flex-col gap-6 px-8 py-8">
+        <section className={`relative z-10 flex w-full max-w-[620px] flex-col gap-6 ${questionSectionPaddingClassName}`}>
           <div className="mb-2 flex items-center justify-between">
             <div
               className="type-label-sm uppercase tracking-[0.1em]"
@@ -530,7 +538,7 @@ export function FormsRunnerClient({
       <div style={shellStyle} className={shellClassName}>
         {backgroundLayers}
         <section
-          className={`relative z-10 flex w-full max-w-[560px] flex-col gap-4 px-8 py-10 ${centeredSectionClassName}`}
+          className={`relative z-10 flex w-full max-w-[560px] flex-col gap-4 ${completionSectionPaddingClassName} ${centeredSectionClassName}`}
         >
           <h1
             className="type-display-md m-0"

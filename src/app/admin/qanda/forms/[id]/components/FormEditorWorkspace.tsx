@@ -234,6 +234,7 @@ type FormData = {
   skipIntro: boolean;
   contentAlignH: string;
   contentAlignV: string;
+  flushContent: boolean;
 };
 
 export function FormEditorWorkspace({
@@ -696,6 +697,27 @@ export function FormEditorWorkspace({
                     </div>
                     <small className="type-meta-sm ui-text-muted md:col-span-2">
                       Controls where quiz content sits inside the form page or iframe. Use top + left for left-aligned embeds.
+                    </small>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="type-body-sm ui-text-primary">Embed padding</label>
+                    <div className="inline-flex items-center gap-3">
+                      <input type="hidden" name="flushContent" value="false" />
+                      <label className="relative inline-flex cursor-pointer items-center">
+                        <input
+                          type="checkbox"
+                          name="flushContent"
+                          value="true"
+                          defaultChecked={form.flushContent}
+                          className="peer sr-only"
+                        />
+                        <span className="h-6 w-11 rounded-full bg-[var(--bg-field)] transition-colors peer-checked:bg-[var(--text-primary)]" />
+                        <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-[var(--bg-panel)] shadow-sm transition-transform peer-checked:translate-x-5" />
+                      </label>
+                      <span className="type-body-sm ui-text-primary">Flush content to edges</span>
+                    </div>
+                    <small className="type-meta-sm ui-text-muted">
+                      Removes the inner padding so left-aligned content sits against the iframe edge. Pair with left + top alignment for embeds.
                     </small>
                   </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

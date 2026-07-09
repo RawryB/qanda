@@ -19,6 +19,7 @@ export type PublicFormInfo = {
   skipIntro: boolean;
   contentAlignH: ContentAlignH;
   contentAlignV: ContentAlignV;
+  flushContent: boolean;
 };
 
 export type PublicFormInfoResult =
@@ -41,6 +42,7 @@ const publicFormSelect = {
   skipIntro: true,
   contentAlignH: true,
   contentAlignV: true,
+  flushContent: true,
 } as const;
 
 export async function getPublicFormInfo(slug: string, preview = false): Promise<PublicFormInfoResult> {

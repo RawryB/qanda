@@ -34,6 +34,7 @@ model QandaForm {
   skipIntro         Boolean           @default(false)
   contentAlignH     String            @default("center") // left|center|right
   contentAlignV     String            @default("center") // top|center|bottom
+  flushContent      Boolean           @default(false)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   questions         QandaQuestion[]
