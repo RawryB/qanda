@@ -104,7 +104,7 @@ export function FormsRunnerClient({
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState(initialError ?? "");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(skipIntro && Boolean(initialFormInfo) && !initialError);
 
   const resolvedPrimaryFont = sanitizeRunnerFont(primaryFont, "Syne");
   const resolvedSecondaryFont = sanitizeRunnerFont(secondaryFont, "DM Sans");

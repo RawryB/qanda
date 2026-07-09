@@ -14,6 +14,12 @@ function getPrismaErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
+function getCheckboxBoolean(formData: FormData, key: string, fallback: boolean): boolean {
+  const values = formData.getAll(key);
+  if (values.length === 0) return fallback;
+  return values.some((value) => String(value) === "true");
+}
+
 async function getUniqueCopyNameAndSlug(name: string, slug: string) {
   const baseName = `${name} (Copy)`;
   const baseSlug = `${slug}-copy`;
@@ -52,9 +58,9 @@ export async function createForm(formData: FormData) {
   const completionTitle = formData.get("completionTitle") as string | null;
   const completionMessage = formData.get("completionMessage") as string | null;
   const showQuestionCountRaw = formData.get("showQuestionCount");
-  const showQuestionCount = showQuestionCountRaw === null ? true : String(showQuestionCountRaw) === "true";
-  const skipIntroRaw = formData.get("skipIntro");
-  const skipIntro = skipIntroRaw === null ? false : String(skipIntroRaw) === "true";
+  const showQuestionCount =
+    showQuestionCountRaw === null ? true : getCheckboxBoolean(formData, "showQuestionCount", true);
+  const skipIntro = getCheckboxBoolean(formData, "skipIntro", false);
 
   // Validate slug format
   if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -158,9 +164,7 @@ export async function updateForm(id: string, formData: FormData) {
   };
 
   const getOptionalBoolean = (key: string, fallback: boolean) => {
-    const value = formData.get(key);
-    if (value === null) return fallback;
-    return String(value) === "true";
+    return getCheckboxBoolean(formData, key, fallback);
   };
 
   const name = getStringOrDefault("name", existing.name);
