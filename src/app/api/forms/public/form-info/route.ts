@@ -1,5 +1,4 @@
-import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { getPublicFormInfo } from "@/lib/forms/get-public-form-info";
 import { NextResponse } from "next/server";
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -17,52 +16,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Slug is required" }, { status: 400 });
     }
 
-    if (preview) {
-      const { userId } = await auth();
-      if (!userId) {
-        return NextResponse.json({ error: "Unauthorized preview request" }, { status: 401 });
-      }
+    const result = await getPublicFormInfo(slug, preview);
+
+    if (!result.ok) {
+      const status = result.error === "Unauthorized preview request" ? 401 : 404;
+      return NextResponse.json({ error: result.error }, { status });
     }
 
-    const form = await prisma.qandaForm.findFirst({
-      where: {
-        slug,
-        ...(preview ? {} : { status: "published" }),
-      },
-      select: {
-        name: true,
-        slug: true,
-        introText: true,
-        completionTitle: true,
-        completionMessage: true,
-        primaryColor: true,
-        accentColor: true,
-        transitionColor: true,
-        primaryFont: true,
-        secondaryFont: true,
-        logoUrl: true,
-      },
-    });
-
-    if (!form) {
-      return NextResponse.json({ error: "Form not found or not published" }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      name: form.name,
-      slug: form.slug,
-      introText: form.introText,
-      completionTitle: form.completionTitle,
-      completionMessage: form.completionMessage,
-      primaryColor: form.primaryColor,
-      accentColor: form.accentColor,
-      transitionColor: form.transitionColor,
-      primaryFont: form.primaryFont,
-      secondaryFont: form.secondaryFont,
-      logoUrl: form.logoUrl,
-    });
+    return NextResponse.json(result.form);
   } catch (error: unknown) {
     return NextResponse.json({ error: getErrorMessage(error, "Failed to fetch form") }, { status: 500 });
   }
 }
-
