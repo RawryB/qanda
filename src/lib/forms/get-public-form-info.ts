@@ -14,6 +14,7 @@ export type PublicFormInfo = {
   secondaryFont: string;
   logoUrl: string | null;
   backgroundImageUrl: string | null;
+  skipIntro: boolean;
 };
 
 export type PublicFormInfoResult =
@@ -33,6 +34,7 @@ const publicFormSelect = {
   secondaryFont: true,
   logoUrl: true,
   backgroundImageUrl: true,
+  skipIntro: true,
 } as const;
 
 export async function getPublicFormInfo(slug: string, preview = false): Promise<PublicFormInfoResult> {

@@ -38,6 +38,7 @@ export default async function EditFormPage({
         completionTitle: form.completionTitle,
         completionMessage: form.completionMessage,
         showQuestionCount: form.showQuestionCount,
+        skipIntro: form.skipIntro,
       }}
       questions={questions.map((q) => ({
         id: q.id,

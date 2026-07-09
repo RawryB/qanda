@@ -231,6 +231,7 @@ type FormData = {
   completionTitle: string | null;
   completionMessage: string | null;
   showQuestionCount: boolean;
+  skipIntro: boolean;
 };
 
 export function FormEditorWorkspace({
@@ -652,6 +653,27 @@ export function FormEditorWorkspace({
                   <div className="flex flex-col gap-2">
                     <label htmlFor="introText" className="type-body-sm ui-text-primary">Intro text</label>
                     <textarea id="introText" name="introText" rows={3} defaultValue={form.introText || ""} className="ui-input" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="type-body-sm ui-text-primary">Intro screen</label>
+                    <div className="inline-flex items-center gap-3">
+                      <input type="hidden" name="skipIntro" value="false" />
+                      <label className="relative inline-flex cursor-pointer items-center">
+                        <input
+                          type="checkbox"
+                          name="skipIntro"
+                          value="true"
+                          defaultChecked={form.skipIntro}
+                          className="peer sr-only"
+                        />
+                        <span className="h-6 w-11 rounded-full bg-[var(--bg-field)] transition-colors peer-checked:bg-[var(--text-primary)]" />
+                        <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-[var(--bg-panel)] shadow-sm transition-transform peer-checked:translate-x-5" />
+                      </label>
+                      <span className="type-body-sm ui-text-primary">Go directly to question 1</span>
+                    </div>
+                    <small className="type-meta-sm ui-text-muted">
+                      When enabled, visitors skip the intro page and land on the first question immediately.
+                    </small>
                   </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="flex flex-col gap-2">

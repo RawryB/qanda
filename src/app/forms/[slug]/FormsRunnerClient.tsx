@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui";
 import type { PublicFormInfo } from "@/lib/forms/get-public-form-info";
 import { buildRunnerGoogleFontsHref, sanitizeRunnerFont } from "@/lib/forms/runner-fonts";
@@ -68,6 +68,9 @@ export function FormsRunnerClient({
   initialFormInfo: PublicFormInfo | null;
   initialError: string | null;
 }) {
+  const skipIntro = initialFormInfo?.skipIntro ?? false;
+  const autoStartAttempted = useRef(false);
+
   const [state, setState] = useState<FormState>("start");
   const [formName, setFormName] = useState(initialFormInfo?.name ?? "");
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(
@@ -132,7 +135,7 @@ export function FormsRunnerClient({
     };
   }, [resolvedPrimaryFont, resolvedSecondaryFont]);
 
-  const handleStart = async () => {
+  const handleStart = useCallback(async () => {
     if (!initialFormInfo) return;
     setIsSubmitting(true);
     setError("");
@@ -166,7 +169,13 @@ export function FormsRunnerClient({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [initialFormInfo, slug, isPreview]);
+
+  useEffect(() => {
+    if (!skipIntro || !initialFormInfo || initialError || autoStartAttempted.current) return;
+    autoStartAttempted.current = true;
+    void handleStart();
+  }, [skipIntro, initialFormInfo, initialError, handleStart]);
 
   const handleNext = async () => {
     if (!submissionId || !currentQuestion) return;
@@ -371,6 +380,17 @@ export function FormsRunnerClient({
   ) : null;
 
   if (state === "start") {
+    if (skipIntro) {
+      return (
+        <div style={shellStyle} className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+          {backgroundLayers}
+          {error && (
+            <p className="relative z-10 m-0 px-8 text-center text-[var(--danger-fg)]">{error}</p>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div style={shellStyle} className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
         {backgroundLayers}

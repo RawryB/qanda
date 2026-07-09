@@ -52,6 +52,8 @@ export async function createForm(formData: FormData) {
   const completionMessage = formData.get("completionMessage") as string | null;
   const showQuestionCountRaw = formData.get("showQuestionCount");
   const showQuestionCount = showQuestionCountRaw === null ? true : String(showQuestionCountRaw) === "true";
+  const skipIntroRaw = formData.get("skipIntro");
+  const skipIntro = skipIntroRaw === null ? false : String(skipIntroRaw) === "true";
 
   // Validate slug format
   if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -120,6 +122,7 @@ export async function createForm(formData: FormData) {
         completionTitle: completionTitle?.trim() || null,
         completionMessage: completionMessage?.trim() || null,
         showQuestionCount,
+        skipIntro,
       },
     });
 
@@ -175,6 +178,7 @@ export async function updateForm(id: string, formData: FormData) {
   const completionTitle = getOptionalString("completionTitle", existing.completionTitle);
   const completionMessage = getOptionalString("completionMessage", existing.completionMessage);
   const showQuestionCount = getOptionalBoolean("showQuestionCount", existing.showQuestionCount);
+  const skipIntro = getOptionalBoolean("skipIntro", existing.skipIntro);
 
   // Validate slug format
   if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -244,6 +248,7 @@ export async function updateForm(id: string, formData: FormData) {
         completionTitle: completionTitle?.trim() || null,
         completionMessage: completionMessage?.trim() || null,
         showQuestionCount,
+        skipIntro,
       },
     });
 
@@ -323,6 +328,7 @@ export async function duplicateForm(id: string) {
         completionTitle: source.completionTitle,
         completionMessage: source.completionMessage,
         showQuestionCount: source.showQuestionCount,
+        skipIntro: source.skipIntro,
       },
       select: { id: true },
     });
