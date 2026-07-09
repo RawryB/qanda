@@ -3,6 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui";
 import type { PublicFormInfo } from "@/lib/forms/get-public-form-info";
+import {
+  getCenteredSectionClasses,
+  getErrorTextClasses,
+  getShellAlignmentClasses,
+  parseContentAlignH,
+  parseContentAlignV,
+} from "@/lib/forms/runner-alignment";
 import { buildRunnerGoogleFontsHref, sanitizeRunnerFont } from "@/lib/forms/runner-fonts";
 
 type Question = {
@@ -70,6 +77,11 @@ export function FormsRunnerClient({
 }) {
   const skipIntro = initialFormInfo?.skipIntro ?? false;
   const autoStartAttempted = useRef(false);
+  const contentAlignH = parseContentAlignH(initialFormInfo?.contentAlignH);
+  const contentAlignV = parseContentAlignV(initialFormInfo?.contentAlignV);
+  const shellClassName = `relative flex min-h-screen overflow-hidden p-4 ${getShellAlignmentClasses(contentAlignH, contentAlignV)}`;
+  const centeredSectionClassName = getCenteredSectionClasses(contentAlignH);
+  const errorTextClassName = getErrorTextClasses(contentAlignH);
 
   const [state, setState] = useState<FormState>("start");
   const [formName, setFormName] = useState(initialFormInfo?.name ?? "");
@@ -382,19 +394,21 @@ export function FormsRunnerClient({
   if (state === "start") {
     if (skipIntro) {
       return (
-        <div style={shellStyle} className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+        <div style={shellStyle} className={shellClassName}>
           {backgroundLayers}
           {error && (
-            <p className="relative z-10 m-0 px-8 text-center text-[var(--danger-fg)]">{error}</p>
+            <p className={`relative z-10 m-0 px-8 text-[var(--danger-fg)] ${errorTextClassName}`}>{error}</p>
           )}
         </div>
       );
     }
 
     return (
-      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      <div style={shellStyle} className={shellClassName}>
         {backgroundLayers}
-        <section className="relative z-10 flex w-full max-w-[760px] flex-col items-center gap-6 px-8 py-10 text-center">
+        <section
+          className={`relative z-10 flex w-full max-w-[760px] flex-col gap-6 px-8 py-10 ${centeredSectionClassName}`}
+        >
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="Form logo" className="h-[56px] w-auto object-contain" />
@@ -432,7 +446,7 @@ export function FormsRunnerClient({
     const displayTitle = rawTitle.replace(/\\n/g, "\n");
 
     return (
-      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      <div style={shellStyle} className={shellClassName}>
         {backgroundLayers}
         <section className="relative z-10 flex w-full max-w-[620px] flex-col gap-6 px-8 py-8">
           <div className="mb-2 flex items-center justify-between">
@@ -513,9 +527,11 @@ export function FormsRunnerClient({
 
   if (state === "completed") {
     return (
-      <div style={shellStyle} className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      <div style={shellStyle} className={shellClassName}>
         {backgroundLayers}
-        <section className="relative z-10 flex w-full max-w-[560px] flex-col items-center gap-4 px-8 py-10 text-center">
+        <section
+          className={`relative z-10 flex w-full max-w-[560px] flex-col gap-4 px-8 py-10 ${centeredSectionClassName}`}
+        >
           <h1
             className="type-display-md m-0"
             style={{ fontFamily: "var(--runner-font-primary)", color: textPrimary }}

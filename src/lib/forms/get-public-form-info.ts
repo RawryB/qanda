@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import type { ContentAlignH, ContentAlignV } from "@/lib/forms/runner-alignment";
+import { parseContentAlignH, parseContentAlignV } from "@/lib/forms/runner-alignment";
 
 export type PublicFormInfo = {
   name: string;
@@ -15,6 +17,8 @@ export type PublicFormInfo = {
   logoUrl: string | null;
   backgroundImageUrl: string | null;
   skipIntro: boolean;
+  contentAlignH: ContentAlignH;
+  contentAlignV: ContentAlignV;
 };
 
 export type PublicFormInfoResult =
@@ -35,6 +39,8 @@ const publicFormSelect = {
   logoUrl: true,
   backgroundImageUrl: true,
   skipIntro: true,
+  contentAlignH: true,
+  contentAlignV: true,
 } as const;
 
 export async function getPublicFormInfo(slug: string, preview = false): Promise<PublicFormInfoResult> {
@@ -57,5 +63,12 @@ export async function getPublicFormInfo(slug: string, preview = false): Promise<
     return { ok: false, error: "Form not found or not published" };
   }
 
-  return { ok: true, form };
+  return {
+    ok: true,
+    form: {
+      ...form,
+      contentAlignH: parseContentAlignH(form.contentAlignH),
+      contentAlignV: parseContentAlignV(form.contentAlignV),
+    },
+  };
 }

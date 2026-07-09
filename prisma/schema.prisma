@@ -32,6 +32,8 @@ model QandaForm {
   completionMessage String?
   showQuestionCount Boolean           @default(true)
   skipIntro         Boolean           @default(false)
+  contentAlignH     String            @default("center") // left|center|right
+  contentAlignV     String            @default("center") // top|center|bottom
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   questions         QandaQuestion[]

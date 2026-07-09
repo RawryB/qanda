@@ -39,6 +39,8 @@ export default async function EditFormPage({
         completionMessage: form.completionMessage,
         showQuestionCount: form.showQuestionCount,
         skipIntro: form.skipIntro,
+        contentAlignH: form.contentAlignH,
+        contentAlignV: form.contentAlignV,
       }}
       questions={questions.map((q) => ({
         id: q.id,

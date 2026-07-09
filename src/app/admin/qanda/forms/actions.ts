@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { fireZapierSchemaTestForForm } from "@/lib/qanda/webhook";
+import { parseContentAlignH, parseContentAlignV } from "@/lib/forms/runner-alignment";
 
 function getPrismaErrorCode(error: unknown): string | undefined {
   if (typeof error === "object" && error !== null && "code" in error) {
@@ -179,6 +180,14 @@ export async function updateForm(id: string, formData: FormData) {
   const completionMessage = getOptionalString("completionMessage", existing.completionMessage);
   const showQuestionCount = getOptionalBoolean("showQuestionCount", existing.showQuestionCount);
   const skipIntro = getOptionalBoolean("skipIntro", existing.skipIntro);
+  const contentAlignH = parseContentAlignH(
+    typeof formData.get("contentAlignH") === "string" ? (formData.get("contentAlignH") as string) : null,
+    parseContentAlignH(existing.contentAlignH),
+  );
+  const contentAlignV = parseContentAlignV(
+    typeof formData.get("contentAlignV") === "string" ? (formData.get("contentAlignV") as string) : null,
+    parseContentAlignV(existing.contentAlignV),
+  );
 
   // Validate slug format
   if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -249,6 +258,8 @@ export async function updateForm(id: string, formData: FormData) {
         completionMessage: completionMessage?.trim() || null,
         showQuestionCount,
         skipIntro,
+        contentAlignH,
+        contentAlignV,
       },
     });
 
@@ -329,6 +340,8 @@ export async function duplicateForm(id: string) {
         completionMessage: source.completionMessage,
         showQuestionCount: source.showQuestionCount,
         skipIntro: source.skipIntro,
+        contentAlignH: source.contentAlignH,
+        contentAlignV: source.contentAlignV,
       },
       select: { id: true },
     });

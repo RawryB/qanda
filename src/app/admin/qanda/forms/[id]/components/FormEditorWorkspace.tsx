@@ -232,6 +232,8 @@ type FormData = {
   completionMessage: string | null;
   showQuestionCount: boolean;
   skipIntro: boolean;
+  contentAlignH: string;
+  contentAlignV: string;
 };
 
 export function FormEditorWorkspace({
@@ -673,6 +675,27 @@ export function FormEditorWorkspace({
                     </div>
                     <small className="type-meta-sm ui-text-muted">
                       When enabled, visitors skip the intro page and land on the first question immediately.
+                    </small>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="flex flex-col gap-2">
+                      <label htmlFor="contentAlignH" className="type-body-sm ui-text-primary">Horizontal alignment</label>
+                      <Select id="contentAlignH" name="contentAlignH" defaultValue={form.contentAlignH}>
+                        <option value="left">Left</option>
+                        <option value="center">Center</option>
+                        <option value="right">Right</option>
+                      </Select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label htmlFor="contentAlignV" className="type-body-sm ui-text-primary">Vertical alignment</label>
+                      <Select id="contentAlignV" name="contentAlignV" defaultValue={form.contentAlignV}>
+                        <option value="top">Top</option>
+                        <option value="center">Center</option>
+                        <option value="bottom">Bottom</option>
+                      </Select>
+                    </div>
+                    <small className="type-meta-sm ui-text-muted md:col-span-2">
+                      Controls where quiz content sits inside the form page or iframe. Use top + left for left-aligned embeds.
                     </small>
                   </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
