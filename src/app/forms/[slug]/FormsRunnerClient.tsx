@@ -14,6 +14,7 @@ import {
   parseContentAlignV,
 } from "@/lib/forms/runner-alignment";
 import { buildRunnerGoogleFontsHref, sanitizeRunnerFont } from "@/lib/forms/runner-fonts";
+import { notifyQandaCompleted, notifyQandaStarted } from "@/lib/qanda/parent-events";
 
 type Question = {
   id: string;
@@ -167,6 +168,7 @@ export function FormsRunnerClient({
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to start form");
+      notifyQandaStarted(slug, data.submissionId);
       setSubmissionId(data.submissionId);
       if (data.form?.name) setFormName(data.form.name);
       if (data.form?.backgroundImageUrl) setBackgroundImageUrl(data.form.backgroundImageUrl);
@@ -214,6 +216,7 @@ export function FormsRunnerClient({
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to save answer");
       if (data.completed) {
+        notifyQandaCompleted(slug, submissionId, data);
         setState("completed");
         if (data.redirectUrl) window.location.href = data.redirectUrl;
       } else {
