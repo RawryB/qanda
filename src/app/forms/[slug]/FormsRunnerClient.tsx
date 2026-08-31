@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui";
 import type { PublicFormInfo } from "@/lib/forms/get-public-form-info";
 import {
@@ -80,7 +80,7 @@ export function FormsRunnerClient({
   initialError: string | null;
 }) {
   const skipIntro = initialFormInfo?.skipIntro ?? false;
-  const autoStartAttempted = useRef(false);
+  const initialQuestion = skipIntro ? initialFormInfo?.firstQuestion ?? null : null;
   const contentAlignH = parseContentAlignH(initialFormInfo?.contentAlignH);
   const contentAlignV = parseContentAlignV(initialFormInfo?.contentAlignV);
   const flushContent = initialFormInfo?.flushContent ?? false;
@@ -92,7 +92,7 @@ export function FormsRunnerClient({
   const questionSectionPaddingClassName = getSectionPaddingClasses(flushContent, contentAlignV, "question");
   const completionSectionPaddingClassName = getSectionPaddingClasses(flushContent, contentAlignV, "completion");
 
-  const [state, setState] = useState<FormState>("start");
+  const [state, setState] = useState<FormState>(initialQuestion ? "question" : "start");
   const [formName, setFormName] = useState(initialFormInfo?.name ?? "");
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(
     initialFormInfo?.backgroundImageUrl ?? null,
@@ -106,14 +106,16 @@ export function FormsRunnerClient({
   const [introText, setIntroText] = useState<string | null>(initialFormInfo?.introText ?? null);
   const [completionTitle, setCompletionTitle] = useState<string | null>(initialFormInfo?.completionTitle ?? null);
   const [completionMessage, setCompletionMessage] = useState<string | null>(initialFormInfo?.completionMessage ?? null);
-  const [showQuestionCount, setShowQuestionCount] = useState(true);
+  const [showQuestionCount, setShowQuestionCount] = useState(initialFormInfo?.showQuestionCount ?? true);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(initialQuestion);
   const [stepIndex, setStepIndex] = useState(0);
-  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(initialFormInfo?.totalQuestions ?? 0);
   const [answer, setAnswer] = useState("");
-  const [error, setError] = useState(initialError ?? "");
-  const [isSubmitting, setIsSubmitting] = useState(skipIntro && Boolean(initialFormInfo) && !initialError);
+  const [error, setError] = useState(
+    initialError ?? (skipIntro && !initialQuestion ? "Form has no questions" : ""),
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resolvedPrimaryFont = sanitizeRunnerFont(primaryFont, "Syne");
   const resolvedSecondaryFont = sanitizeRunnerFont(secondaryFont, "DM Sans");
@@ -156,33 +158,41 @@ export function FormsRunnerClient({
     };
   }, [resolvedPrimaryFont, resolvedSecondaryFont]);
 
+  const requestStart = useCallback(async () => {
+    const response = await fetch("/api/forms/public/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, preview: isPreview }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to start form");
+    if (typeof data.submissionId !== "string" || data.submissionId.length === 0) {
+      throw new Error("Failed to start form");
+    }
+    notifyQandaStarted(slug, data.submissionId);
+    setSubmissionId(data.submissionId);
+    if (data.form?.name) setFormName(data.form.name);
+    if (data.form?.backgroundImageUrl) setBackgroundImageUrl(data.form.backgroundImageUrl);
+    if (data.form?.introText !== undefined) setIntroText(data.form.introText ?? null);
+    if (data.form?.completionTitle !== undefined) setCompletionTitle(data.form.completionTitle ?? null);
+    if (data.form?.completionMessage !== undefined) setCompletionMessage(data.form.completionMessage ?? null);
+    if (typeof data.form?.showQuestionCount === "boolean") setShowQuestionCount(data.form.showQuestionCount);
+    if (typeof data.form?.primaryColor === "string") setPrimaryColor(data.form.primaryColor);
+    if (typeof data.form?.accentColor === "string") setAccentColor(data.form.accentColor);
+    if (typeof data.form?.transitionColor === "string") setTransitionColor(data.form.transitionColor);
+    if (typeof data.form?.primaryFont === "string") setPrimaryFont(data.form.primaryFont);
+    if (typeof data.form?.secondaryFont === "string") setSecondaryFont(data.form.secondaryFont);
+    if (typeof data.form?.logoUrl === "string") setLogoUrl(data.form.logoUrl);
+    if (data.totalQuestions) setTotalQuestions(data.totalQuestions);
+    return data as { submissionId: string; question: Question; stepIndex?: number; totalQuestions?: number };
+  }, [slug, isPreview]);
+
   const handleStart = useCallback(async () => {
     if (!initialFormInfo) return;
     setIsSubmitting(true);
     setError("");
     try {
-      const response = await fetch("/api/forms/public/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, preview: isPreview }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to start form");
-      notifyQandaStarted(slug, data.submissionId);
-      setSubmissionId(data.submissionId);
-      if (data.form?.name) setFormName(data.form.name);
-      if (data.form?.backgroundImageUrl) setBackgroundImageUrl(data.form.backgroundImageUrl);
-      if (data.form?.introText !== undefined) setIntroText(data.form.introText ?? null);
-      if (data.form?.completionTitle !== undefined) setCompletionTitle(data.form.completionTitle ?? null);
-      if (data.form?.completionMessage !== undefined) setCompletionMessage(data.form.completionMessage ?? null);
-      if (typeof data.form?.showQuestionCount === "boolean") setShowQuestionCount(data.form.showQuestionCount);
-      if (typeof data.form?.primaryColor === "string") setPrimaryColor(data.form.primaryColor);
-      if (typeof data.form?.accentColor === "string") setAccentColor(data.form.accentColor);
-      if (typeof data.form?.transitionColor === "string") setTransitionColor(data.form.transitionColor);
-      if (typeof data.form?.primaryFont === "string") setPrimaryFont(data.form.primaryFont);
-      if (typeof data.form?.secondaryFont === "string") setSecondaryFont(data.form.secondaryFont);
-      if (typeof data.form?.logoUrl === "string") setLogoUrl(data.form.logoUrl);
-      if (data.totalQuestions) setTotalQuestions(data.totalQuestions);
+      const data = await requestStart();
       setCurrentQuestion(data.question);
       setStepIndex(data.stepIndex ?? 0);
       setState("question");
@@ -191,24 +201,23 @@ export function FormsRunnerClient({
     } finally {
       setIsSubmitting(false);
     }
-  }, [initialFormInfo, slug, isPreview]);
-
-  useEffect(() => {
-    if (!skipIntro || !initialFormInfo || initialError || autoStartAttempted.current) return;
-    autoStartAttempted.current = true;
-    void handleStart();
-  }, [skipIntro, initialFormInfo, initialError, handleStart]);
+  }, [initialFormInfo, requestStart]);
 
   const handleNext = async () => {
-    if (!submissionId || !currentQuestion) return;
+    if (!currentQuestion) return;
     setIsSubmitting(true);
     setError("");
     try {
+      let activeSubmissionId = submissionId;
+      if (!activeSubmissionId) {
+        const started = await requestStart();
+        activeSubmissionId = started.submissionId;
+      }
       const response = await fetch("/api/forms/public/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          submissionId,
+          submissionId: activeSubmissionId,
           questionId: currentQuestion.id,
           value: currentQuestion.type === "instruction" ? null : answer,
         }),
@@ -216,7 +225,7 @@ export function FormsRunnerClient({
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to save answer");
       if (data.completed) {
-        notifyQandaCompleted(slug, submissionId, data);
+        notifyQandaCompleted(slug, activeSubmissionId, data);
         setState("completed");
         if (data.redirectUrl) window.location.href = data.redirectUrl;
       } else {

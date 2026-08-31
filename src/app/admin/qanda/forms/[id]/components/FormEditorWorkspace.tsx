@@ -676,6 +676,7 @@ export function FormEditorWorkspace({
                     </div>
                     <small className="type-meta-sm ui-text-muted">
                       When enabled, visitors skip the intro page and land on the first question immediately.
+                      A submission is created when they answer, not when the page loads.
                     </small>
                   </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

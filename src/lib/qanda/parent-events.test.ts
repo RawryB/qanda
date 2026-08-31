@@ -94,13 +94,16 @@ describe("payloads", () => {
 });
 
 describe("start emission", () => {
-  it("does not emit on iframe load / before start is reported", () => {
+  it("does not treat skip-intro page load as a start", () => {
     const mock = createMockParent();
-    createQandaParentBridge(() => ({
+    const bridge = createQandaParentBridge(() => ({
       parent: mock.parent,
       isEmbedded: true,
       origins: [SWIMFAST_PRODUCTION_PARENT_ORIGIN],
     }));
+    // Showing question 1 without creating a submission must not emit.
+    assert.equal(mock.messages.length, 0);
+    bridge.notifyStarted("sf-coaching-dxb", undefined);
     assert.equal(mock.messages.length, 0);
   });
 

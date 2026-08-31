@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { renderTemplate } from "@/lib/qanda/template";
+import { toPublicQuestion } from "@/lib/forms/public-question";
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message) return error.message;
@@ -67,26 +67,9 @@ export async function POST(request: Request) {
       },
     });
 
-    const values: Record<string, string> = {};
-    const renderedTitle = renderTemplate(firstQuestion.title, values);
-    const renderedHelpText = renderTemplate(firstQuestion.helpText, values);
-
     return NextResponse.json({
       submissionId: submission.id,
-      question: {
-        id: firstQuestion.id,
-        type: firstQuestion.type,
-        title: firstQuestion.title,
-        helpText: firstQuestion.helpText,
-        renderedTitle,
-        renderedHelpText,
-        required: firstQuestion.required,
-        key: firstQuestion.key,
-        choices: firstQuestion.choices.map((c) => ({
-          value: c.value,
-          label: c.label,
-        })),
-      },
+      question: toPublicQuestion(firstQuestion),
       stepIndex: 0,
       totalQuestions,
       form: {

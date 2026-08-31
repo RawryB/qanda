@@ -24,13 +24,15 @@ export default async function QandaSubmissionsPage({
   const formIdFilter = params.formId;
   const forms = await getForms();
 
-  const where: Prisma.QandaSubmissionWhereInput = {};
+  const where: Prisma.QandaSubmissionWhereInput = {
+    OR: [{ status: "completed" }, { answers: { some: {} } }],
+  };
   if (formIdFilter) where.formId = formIdFilter;
 
   const submissions = await prisma.qandaSubmission.findMany({
     where,
     include: { form: { select: { id: true, name: true, slug: true } } },
-    orderBy: [{ completedAt: "desc" }, { startedAt: "desc" }],
+    orderBy: [{ completedAt: { sort: "desc", nulls: "last" } }, { startedAt: "desc" }],
     take: 100,
   });
 
